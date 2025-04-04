@@ -2,7 +2,19 @@ import React, { useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-const ChatMessage: React.FC<any> = ({
+interface Message {
+    role: "user" | "assistant" | "system";
+    content: string;
+}
+
+interface ChatMessageProps {
+    message: Message;
+    onConfirmSwap: (swapInfo: any) => void;
+    onRejectSwap: (swapInfo: any) => void;
+    isLatestMessage?: boolean;
+}
+
+const ChatMessage: React.FC<ChatMessageProps> = ({
     message,
     onConfirmSwap,
     onRejectSwap,

@@ -29,19 +29,6 @@ export default function Home() {
     const [showHelpOverlay, setShowHelpOverlay] = useState(false);
     // New state for selected suggestion index
     const [selectedSuggestion, setSelectedSuggestion] = useState(0);
-    // State to store chat window dimensions
-    const [chatWindowDimensions, setChatWindowDimensions] = useState({ top: 0, left: 0, width: 0, height: 0 });
-
-    // State to track the eye status for both players
-    const [player1EyeOpen, setPlayer1EyeOpen] = useState(true);
-    const [player2EyeOpen, setPlayer2EyeOpen] = useState(true);
-
-    // State to track if we're in blur mode - once activated, requires both players to open eyes
-    const [blurModeActive, setBlurModeActive] = useState(false);
-
-    // State to track active player (for blur effect when both eyes closed)
-    const [activePlayer, setActivePlayer] = useState<'p1' | 'p2'>('p1');
-
     // State for suggested commands that can be updated
     const [commands, setCommands] = useState([
         { text: "Swap 10 USD for ETH ", category: "usd_to_eth", valueIndex: 1, step: 5 },
@@ -67,13 +54,31 @@ export default function Home() {
         return () => clearTimeout(timer);
     }, []);
 
-    // Helper function to extract and update numeric value in a command
-    interface Command {
-        text: string;
-        category: string;
-        valueIndex?: number;
-        step?: number;
-    }
+    const updateCommandValue = (commandText: string, step: number): string => {
+        // Regular expression to find a number in the command
+        const numberRegex = /(\d+(\.\d+)?)/;
+        const match = commandText.match(
+            numberRegex
+        );
+
+        if (match) {
+            const currentValue = parseFloat(
+                match[0]
+            );
+
+            // Prevent negative values
+            const newValue = Math.max(0, currentValue + step);
+
+            // Format to keep decimal places if original had them
+            const formattedNewValue = match[0].includes('.') ?
+                newValue.toFixed(match[0].split('.')[1].length) :
+                Math.floor(newValue);
+
+            return commandText.replace(numberRegex, String(formattedNewValue));
+        }
+
+        return commandText;
+    };
 
     // Helper function to simulate chunked responses
     const simulateChunkedResponse = (text: string): string[] => {
@@ -107,6 +112,54 @@ export default function Home() {
                 // Reset selection when opening help
                 if (!showHelpOverlay) {
                     setSelectedSuggestion(0);
+                }
+            }
+
+            // Handle navigation in help overlay
+            if (showHelpOverlay) {
+                if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    setSelectedSuggestion(prev =>
+                        prev === 0 ? commands.length - 1 : prev - 1
+                    );
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    setSelectedSuggestion(prev =>
+                        prev === commands.length - 1 ? 0 : prev + 1
+                    );
+                } else if (e.key === 'Enter' || e.key === 'x' || e.key === 'X') {
+                    e.preventDefault();
+                    addSuggestedCommand(commands[selectedSuggestion].text);
+                } else if (e.key === 'h' || e.key === 'H') {
+                    e.preventDefault();
+                    setShowHelpOverlay(false);
+                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    // Handle value adjustment for numeric commands
+                    const selectedCommand = commands[selectedSuggestion];
+
+                    // Skip if command doesn't have a step (non-numeric commands)
+                    if (!selectedCommand.step) return;
+
+                    const step = e.key === 'ArrowRight'
+                        ? selectedCommand.step
+                        : -selectedCommand.step;
+
+                    // Update the command text
+                    const updatedText = updateCommandValue(
+                        selectedCommand.text,
+                        step
+                    );
+
+                    // Create a new array with the updated command
+                    const updatedCommands = [...commands];
+                    updatedCommands[selectedSuggestion] = {
+                        ...selectedCommand,
+                        text: updatedText
+                    };
+
+                    // Update state to trigger re-render
+                    setCommands(updatedCommands);
                 }
             }
         };
@@ -303,15 +356,10 @@ export default function Home() {
         <div className="flex flex-row min-h-screen backdrop">
             <main
                 className="flex-1 upper-holder flex flex-col max-w-2xl mx-auto w-full py-10"
-                style={{
-                    filter: (blurModeActive && activePlayer !== 'p1') ? 'blur(7px)' : 'none',
-                    transition: 'filter 0.3s ease'
-                }}
             >
                 <div className="sticky top-0 z-50 backdrop-blur-sm">
                     <div
                         style={{justifyContent: "space-between"}}
-                        className={`max-w-2xl mx-auto flex items-center ${(blurModeActive && activePlayer === 'p1') ? 'border-b-2 border-red-500 pb-1' : ''}`}
                     >
                         <div className="text-white">P1: (vitally.eth) 100 ETH 100,000 USD</div>
                     </div>
@@ -341,7 +389,6 @@ export default function Home() {
                                     onConfirmSwap={handleConfirmSwap}
                                     onRejectSwap={handleRejectSwap}
                                     isLatestMessage={index === messages.length - 1}
-                                    player="p1"
                                 />
                             ))}
                             {loading && (
@@ -425,14 +472,12 @@ export default function Home() {
             <main
                 className="flex-1 upper-holder flex flex-col max-w-2xl mx-auto w-full py-10"
                 style={{
-                    filter: (blurModeActive && activePlayer !== 'p2') ? 'blur(7px)' : 'none',
                     transition: 'filter 0.3s ease'
                 }}
             >
                 <div className="sticky top-0 z-10 backdrop-blur-sm">
                     <div
                         style={{justifyContent: "space-between"}}
-                        className={`flex max-w-2xl mx-auto items-center ${(blurModeActive && activePlayer === 'p2') ? 'border-b-2 border-blue-500 pb-1' : ''}`}
                     >
                         <div style={{textAlign: "right"}} className="text-white">P2: (0x123...321) 100 ETH 100,000 USD</div>
                     </div>
@@ -459,7 +504,6 @@ export default function Home() {
                                     onConfirmSwap={handleConfirmSwap2}
                                     onRejectSwap={handleRejectSwap2}
                                     isLatestMessage={index === messages2.length - 1}
-                                    player="p2"
                                 />
                             ))}
                             {loading2 && (
