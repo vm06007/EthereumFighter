@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
 import { useState, useRef, useEffect } from "react";
 import type { ChatMessage as ChatMessageType } from "./lib/types/api";
 import ChatMessage from "./ChatMessage";
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 export default function Home() {
     const [messages, setMessages] = useState<ChatMessageType[]>([]);
