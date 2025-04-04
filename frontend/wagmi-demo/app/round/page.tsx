@@ -506,6 +506,7 @@ export default function Home() {
                                     onConfirmSwap={handleConfirmSwap}
                                     onRejectSwap={handleRejectSwap}
                                     isLatestMessage={index === messages.length - 1}
+                                    player="p1"
                                 />
                             ))}
                             {loading && (
@@ -722,6 +723,7 @@ export default function Home() {
                                     onConfirmSwap={handleConfirmSwap2}
                                     onRejectSwap={handleRejectSwap2}
                                     isLatestMessage={index === messages2.length - 1}
+                                    player="p2"
                                 />
                             ))}
                             {loading2 && (
