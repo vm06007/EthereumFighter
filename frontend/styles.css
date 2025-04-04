@@ -1,0 +1,198 @@
+body {
+    color: white;
+    background-color: black;
+    font-family: "Press Start 2P", monospace;
+    font-size: 1rem;
+    text-align: center;
+    text-transform: uppercase;
+    margin: 0;
+    background-size: cover;
+    backdrop-filter: brightness(0.2) blur(2px);
+}
+
+body:before {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    margin: auto;
+    background: repeating-linear-gradient(#0D122B, #0D122B 2px, #565B73 2px, #565B73 4px);
+    opacity: 0.2;
+    z-index: 100;
+    content: "";
+    pointer-events: none;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+}
+
+h1 {
+    margin: 0;
+}
+
+.splash-screen {
+    width: 100vw;
+    height: 100vh;
+}
+
+.title {
+    margin: auto;
+    font-family: "Permanent Marker", monospace;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    height: 35vh;
+    font-size: 2rem;
+    line-height: 0.75;
+    word-break: break-word;
+    max-width: 500px;
+}
+
+.title h1 {
+    background: -webkit-linear-gradient(rgb(255, 18, 18) 30%, rgb(255, 215, 38));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 900 imo !important;
+}
+
+.title-top {
+    transform: skew(-10deg) rotate(-10deg) translateX(-2rem);
+}
+
+.title-bottom {
+    transform: skew(-10deg) rotate(-10deg) translateX(1rem);
+}
+
+.buttons {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 55vh;
+    margin: auto;
+}
+
+.buttons a, .buttons div {
+    display: block;
+    margin-bottom: 0.75rem;
+    padding: 0.4rem;
+    transition: transform 0.1s;
+}
+
+.menu-item {
+    position: relative;
+}
+
+.menu-item.active {
+    color: rgb(147, 154, 255);
+    text-shadow: 2px 2px 0 rgb(47, 61, 255);
+    transform: scale(1.05);
+}
+
+.menu-item.active::before {
+    content: ">";
+    position: absolute;
+    left: -20px;
+    animation: blink 0.5s infinite;
+}
+
+.menu-item.confirmed {
+    animation: confirmPulse 0.5s;
+}
+
+@keyframes confirmPulse {
+    0% { transform: scale(1.05); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1.05); }
+}
+
+.menu-separator {
+    opacity: 0.7;
+    cursor: default;
+    margin-bottom: 0.5rem;
+    padding: 0.2rem;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+.bottom {
+    display: flex;
+    height: 10vh;
+    justify-content: space-around;
+}
+
+.credit {
+    margin-top: 10px;
+    pointer-events: none;
+}
+
+@keyframes fadeInOut {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+}
+
+@media (min-width: 400px) {
+    body {
+        font-size: 1.2rem;
+    }
+
+    .big {
+        font-size: 7rem;
+    }
+}
+
+@media (min-width: 600px) {
+    .big {
+        font-size: 9rem;
+    }
+
+    .title {
+        font-size: 3rem;
+        height: 45vh;
+    }
+
+    .buttons {
+        height: 45vh;
+    }
+
+    .title-top {
+        transform: skew(-10deg) rotate(-10deg) translateX(-2rem);
+    }
+
+    .title-bottom {
+        transform: skew(-10deg) rotate(-10deg) translateX(3rem);
+    }
+}
+
+@media (min-width: 800px) {
+    .credit {
+        position: absolute;
+        right: 50px;
+        margin-top: 0;
+    }
+}
+
+.load {
+    animation: load 800ms 500ms backwards;
+}
+
+@keyframes load {
+    0% {
+        filter: blur(2px) hue-rotate(-150deg);
+    }
+}
+
+::selection {
+    background: #b4fdff;
+}
+
+::-moz-selection {
+    background: #b4fdff;
+}
