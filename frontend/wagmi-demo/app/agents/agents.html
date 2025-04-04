@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Selecton Example</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1 maximum-scale=1.0 user-scalable=no">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="inner">
+        <!--<img class="sf-logo" src="https://vignette2.wikia.nocookie.net/ssb/images/f/f6/SF_Logo.png/revision/latest?cb=20150614010256" />-->
+        <h1 class="title">AI AGENT SELECT</h1>
+        <!--<div class="controls-help">
+            <p>P1: WASD to move, ENTER to select, ESC to cancel | P2: Arrow keys to move, SPACE to select, BACKSPACE to cancel</p>
+        </div>-->
+        <div class="status-display">
+            <span class="player-status p1">P1: Selecting</span>
+            <span class="player-status p2">P2: Selecting</span>
+        </div>
+        <div class="select-container" id="select-containe"></div>
+        <div class="ready-message">READY!</div>
+        <button class="reset-button">Reset Selection</button>
+        </div>
+    </div>
+    <!--<footer class="list-footer">Made with <span class="heart">&hearts;</span> for my homies</footer>-->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+    // Game state
+    const state = {
+        p1: {
+            focusIndex: 0,
+            confirmed: false,
+            selecting: true
+        },
+        p2: {
+            focusIndex: 8,  // Start P2 at a different position
+            confirmed: false,
+            selecting: true
+        },
+        finalCountdown: null,
+        selectionFinal: false
+    };
+
+    const characters = document.querySelectorAll('.character');
+    const p1Status = document.querySelector('.player-status.p1');
+    const p2Status = document.querySelector('.player-status.p2');
+    const readyMessage = document.querySelector('.ready-message');
+    const resetButton = document.querySelector('.reset-button');
+
+    // Update grid layout: 8 characters per row, 2 rows total
+    const gridCols = 8;
+    const gridRows = Math.ceil(characters.length / gridCols);
+
+    // Set initial focus for both players and update status text with character names
+    updateFocus('p1');
+    updateFocus('p2');
+
+    // Handle keyboard input
+    document.addEventListener('keydown', function(event) {
+        // P1 controls (WASD + Enter + Esc)
+        if (!state.selectionFinal) {
+            switch (event.key) {
+                case 'w':
+                case 'W':
+                    if (state.p1.selecting) movePlayer('p1', 'up');
+                    break;
+                case 's':
+                case 'S':
+                    if (state.p1.selecting) movePlayer('p1', 'down');
+                    break;
+                case 'a':
+                case 'A':
+                    if (state.p1.selecting) movePlayer('p1', 'left');
+                    break;
+                case 'd':
+                case 'D':
+                    if (state.p1.selecting) movePlayer('p1', 'right');
+                    break;
+                case ' ':
+                    if (state.p1.selecting && !state.p1.confirmed) confirmSelection('p1');
+                    break;
+                case 'Backspace':
+                    // Allow cancellation even after confirmation, as long as selection isn't final
+                    if (state.p1.confirmed) cancelSelection('p1');
+                    break;
+            }
+        }
+
+        // P2 controls (Arrow keys + Space + Backspace)
+        if (!state.selectionFinal) {
+            switch (event.key) {
+                case 'ArrowUp':
+                    if (state.p2.selecting) movePlayer('p2', 'up');
+                    break;
+                case 'ArrowDown':
+                    if (state.p2.selecting) movePlayer('p2', 'down');
+                    break;
+                case 'ArrowLeft':
+                    if (state.p2.selecting) movePlayer('p2', 'left');
+                    break;
+                case 'ArrowRight':
+                    if (state.p2.selecting) movePlayer('p2', 'right');
+                    break;
+                case 'Enter': // Space
+                    if (state.p2.selecting && !state.p2.confirmed) confirmSelection('p2');
+                    break;
+                case 'Escape':
+                    // Allow cancellation even after confirmation, as long as selection isn't final
+                    if (state.p2.confirmed) cancelSelection('p2');
+                    break;
+            }
+        }
+    });
+
+    // Reset button
+    resetButton.addEventListener('click', function() {
+        resetGame();
+    });
+
+    function movePlayer(player, direction) {
+        const row = Math.floor(state[player].focusIndex / gridCols);
+        const col = state[player].focusIndex % gridCols;
+
+        let newRow = row;
+        let newCol = col;
+
+        switch (direction) {
+            case 'up':
+                newRow = (row - 1 + gridRows) % gridRows;
+                break;
+            case 'down':
+                newRow = (row + 1) % gridRows;
+                break;
+            case 'left':
+                newCol = (col - 1 + gridCols) % gridCols;
+                break;
+            case 'right':
+                newCol = (col + 1) % gridCols;
+                break;
+        }
+
+        let newIndex = newRow * gridCols + newCol;
+
+        // Ensure the index is within range of available characters
+        if (newIndex >= characters.length) {
+            // If we went beyond available characters, go to the last character in that row
+            newIndex = (newRow * gridCols) + (characters.length % gridCols) - 1;
+            // If the result is negative (row is empty), use the last character
+            if (newIndex < 0) newIndex = characters.length - 1;
+        }
+
+        state[player].focusIndex = newIndex;
+        updateFocus(player);
+    }
+
+});
+    </script>
+    <script>
+    const characters = [
+        { name: "Vitalik Buterin", displayName: "Vitalik Buterin" },
+        { name: "Gavin Wood", displayName: "Gavin Wood" },
+        { name: "Michael Saylor", displayName: "Michael Saylor" },
+        { name: "Charles Hopkins", displayName: "Charles Hopkins" },
+        { name: "Jihan Wu", displayName: "Jihan Wu" },
+        { name: "Justin Sun", displayName: "Justin Sun" },
+        { name: "Roger Ver", displayName: "Roger Ver" },
+        { name: "Faketoshi", displayName: "Faketoshi" },
+        { name: "Andreas", displayName: "Andreas" },
+        { name: "Changpeng Zhao", displayName: "Changpeng Zhao" },
+        { name: "Arthur Heiz", displayName: "Arthur Heiz" },
+        { name: "Elizabeth Warren", displayName: "Elizabeth Warren" },
+        { name: "Donald Trump", displayName: "Donald Trump" },
+        { name: "Brian Armstrong", displayName: "Brian Armstrong" },
+        { name: "SBF", displayName: "SBF" },
+        { name: "Senator Lummis", displayName: "Senator Lummis" }
+    ];
+
+    const container = document.getElementById("select-containe");
+
+    characters.forEach(char => {
+        const charElement = document.createElement("a");
+        charElement.classList.add("character");
+        charElement.setAttribute("data-name", char.name);
+        charElement.setAttribute("rel", char.displayName);
+
+        charElement.innerHTML = `
+            <div class="img-container">
+                <img class="character__img" src="images/${char.name}.avif" alt="${char.displayName}">
+            </div>
+            <p class="character__name">${char.displayName}</p>
+        `;
+
+        container.appendChild(charElement);
+    });
+</script>
+</body>
+</html>
