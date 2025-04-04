@@ -29,6 +29,16 @@ export default function Home() {
     const [showHelpOverlay, setShowHelpOverlay] = useState(false);
     // New state for selected suggestion index
     const [selectedSuggestion, setSelectedSuggestion] = useState(0);
+    // State to store chat window dimensions
+    const [chatWindowDimensions, setChatWindowDimensions] = useState({ top: 0, left: 0, width: 0, height: 0 });
+
+    const [player1EyeOpen, setPlayer1EyeOpen] = useState(true);
+    const [player2EyeOpen, setPlayer2EyeOpen] = useState(true);
+    const [blurModeActive, setBlurModeActive] = useState(false);
+
+    // State to track active player (for blur effect when both eyes closed)
+    const [activePlayer, setActivePlayer] = useState('p1');
+
     // State for suggested commands that can be updated
     const [commands, setCommands] = useState([
         { text: "Swap 10 USD for ETH ", category: "usd_to_eth", valueIndex: 1, step: 5 },
@@ -53,6 +63,27 @@ export default function Home() {
         // Clean up timeout
         return () => clearTimeout(timer);
     }, []);
+
+    // Effect to update chat window dimensions when showing overlay
+    useEffect(() => {
+        if (showHelpOverlay && chatWindowRef.current) {
+            const rect = chatWindowRef.current.getBoundingClientRect();
+            setChatWindowDimensions({
+                top: rect.top,
+                left: rect.left,
+                width: rect.width,
+                height: rect.height
+            });
+        }
+    }, [showHelpOverlay]);
+
+    // Helper function to extract and update numeric value in a command
+    interface Command {
+        text: string;
+        category: string;
+        valueIndex?: number;
+        step?: number;
+    }
 
     const updateCommandValue = (commandText: string, step: number): string => {
         // Regular expression to find a number in the command
@@ -273,7 +304,7 @@ export default function Home() {
         setInput2("");
         setLoading2(true);
         setIsTyping2(true);
-        setStreamedResponse2("");
+        setStreamedResponse2(""); // Reset the streamed response
 
         try {
             const res = await fetch("/api/chat", {
@@ -313,6 +344,78 @@ export default function Home() {
             setIsTyping2(false);
         }
     };
+
+    const handleBlind = () => {
+        // Toggle eye icon visibility
+        const eye = document.querySelector(".eye-on");
+        const eye2 = document.querySelector(".eye-off");
+        if (eye && eye2) {
+            eye.classList.toggle("hidden");
+            eye2.classList.toggle("hidden");
+        }
+
+        // Get the new state (toggled)
+        const newEyeState = !player1EyeOpen;
+
+        // Update player 1 eye status
+        setPlayer1EyeOpen(newEyeState);
+
+        // When player 1 clicks eye, set them as active player
+        setActivePlayer('p1');
+
+        // Special blur mode handling:
+        if (!blurModeActive) {
+            // If we're not in blur mode yet, check if both eyes are now closed
+            if (!newEyeState && !player2EyeOpen) {
+                // Both players have closed eyes, activate blur mode
+                setBlurModeActive(true);
+                console.log("BLUR MODE ACTIVATED - Both players must open eyes to deactivate");
+            }
+        } else {
+            // We're already in blur mode - check if both eyes are now open
+            if (newEyeState && player2EyeOpen) {
+                // Both players have opened eyes, deactivate blur mode
+                setBlurModeActive(false);
+                console.log("BLUR MODE DEACTIVATED - Both players opened eyes");
+            }
+        }
+    }
+
+    const handleBlind2 = () => {
+        // Toggle eye icon visibility
+        const eye = document.querySelector(".eye-on-2");
+        const eye2 = document.querySelector(".eye-off-2");
+        if (eye && eye2) {
+            eye.classList.toggle("hidden");
+            eye2.classList.toggle("hidden");
+        }
+
+        // Get the new state (toggled)
+        const newEyeState = !player2EyeOpen;
+
+        // Update player 2 eye status
+        setPlayer2EyeOpen(newEyeState);
+
+        // When player 2 clicks eye, set them as active player
+        setActivePlayer('p2');
+
+        // Special blur mode handling:
+        if (!blurModeActive) {
+            // If we're not in blur mode yet, check if both eyes are now closed
+            if (!newEyeState && !player1EyeOpen) {
+                // Both players have closed eyes, activate blur mode
+                setBlurModeActive(true);
+                console.log("BLUR MODE ACTIVATED - Both players must open eyes to deactivate");
+            }
+        } else {
+            // We're already in blur mode - check if both eyes are now open
+            if (newEyeState && player1EyeOpen) {
+                // Both players have opened eyes, deactivate blur mode
+                setBlurModeActive(false);
+                console.log("BLUR MODE DEACTIVATED - Both players opened eyes");
+            }
+        }
+    }
 
     const handleConfirmSwap = (swapInfo: any) => {
         // Determine which chat the swap was from based on the swapInfo
@@ -356,12 +459,19 @@ export default function Home() {
         <div className="flex flex-row min-h-screen backdrop">
             <main
                 className="flex-1 upper-holder flex flex-col max-w-2xl mx-auto w-full py-10"
+                style={{
+                    filter: (blurModeActive && activePlayer !== 'p1') ? 'blur(7px)' : 'none',
+                    transition: 'filter 0.3s ease'
+                }}
             >
                 <div className="sticky top-0 z-50 backdrop-blur-sm">
                     <div
                         style={{justifyContent: "space-between"}}
+                        className={`max-w-2xl mx-auto flex items-center ${(blurModeActive && activePlayer === 'p1') ? 'border-b-2 border-red-500 pb-1' : ''}`}
                     >
                         <div className="text-white">P1: (vitally.eth) 100 ETH 100,000 USD</div>
+                        <img className="eye-on" onClick={() => {handleBlind()}} width="40" src="./eye-on.png" />
+                        <img className="eye-off hidden" onClick={() => {handleBlind()}} width="40" src="./eye-off.png" />
                     </div>
                     <div className="mb-3 text-white">
                         Agent: (0x123...321) claude/llamahaiku3.6
@@ -371,11 +481,18 @@ export default function Home() {
                 {/* Messages container with position relative for visibility context */}
                 <div
                     ref={chatWindowRef}
+                    style={{
+                        background: isPageLoading ? "none" : "url(./vitalik.jpg)",
+                        backgroundSize: "cover",
+                        position: "relative",
+                        backgroundColor: isPageLoading ? "rgba(0,0,0,0.5)" : "transparent"
+                    }}
                     className="flex-1 chat-window bg-cover overflow-y-auto p-4 space-y-4 border-2 border-gray-600 border-gray-600 rounded-xl">
                     {isPageLoading ? (
                         <div className="flex h-full justify-center items-center">
                             <div className="bg-gray-800 bg-opacity-80 rounded-lg px-6 py-4 text-white">
                                 <div className="flex flex-col items-center gap-2">
+                                    <img width="80" height="80" src="./snail.gif"></img>
                                     <span className="text-lg font-semibold mt-2">Generating...</span>
                                 </div>
                             </div>
@@ -411,6 +528,7 @@ export default function Home() {
                                             </div>
                                         ) : (
                                             <div className="flex items-center gap-2">
+                                                <img width="50" height="50" src="./snail.gif"></img>
                                                 <span>Thinking...</span>
                                             </div>
                                         )}
@@ -420,6 +538,81 @@ export default function Home() {
                         </>
                     )}
                     <div ref={messagesEndRef1} />
+
+                    {/* Help Overlay - using fixed positioning with exact dimensions of the chat window */}
+                    {showHelpOverlay && (
+                        <div
+                            className="fixed bg-black bg-opacity-90 backdrop-blur-md rounded-xl z-50"
+                            style={{
+                                top: chatWindowDimensions.top - 13,
+                                left: chatWindowDimensions.left + 2,
+                                width: chatWindowDimensions.width - 4,
+                                height: chatWindowDimensions.height - 5,
+                                overflow: 'auto',
+                                display: 'flex',
+                                flexDirection: 'column'
+                            }}
+                        >
+                            <div className="p-4 h-full flex flex-col">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h2 className="text-white text-xl font-bold">Suggested Prompts</h2>
+                                    <button
+                                        onClick={() => setShowHelpOverlay(false)}
+                                        className="text-gray-400 hover:text-white"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div className="flex-1 overflow-y-auto space-y-2">
+                                    {commands.map((command, index) => (
+                                        <div
+                                            key={index}
+                                            onClick={() => {
+                                                setSelectedSuggestion(index);
+                                                addSuggestedCommand(command.text);
+                                            }}
+                                            className={`
+                                                flex items-center justify-between
+                                                p-4 rounded-lg cursor-pointer
+                                                transition-colors
+                                                ${selectedSuggestion === index
+                                                    ? 'bg-blue-600 text-white'
+                                                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}
+                                            `}
+                                        >
+                                            <span className="flex-1">{command.text}</span>
+                                            <div className="flex items-center">
+                                                {command.step && selectedSuggestion === index && (
+                                                    <div className="flex items-center mr-3">
+                                                        {/*<span className="text-xs mr-2">Adjust:</span>*/}
+                                                        <div className="gamepad-button-wrapper">
+                                                            <i className="gamepad-button gamepad-button-playstation gamepad-button-playstation--dpad-left gamepad-button-playstation--variant-ps1 gamepad-button--clickable">←</i>
+                                                        </div>
+                                                        <div className="gamepad-button-wrapper mx-1">
+                                                            <i className="gamepad-button gamepad-button-playstation gamepad-button-playstation--dpad-right gamepad-button-playstation--variant-ps1 gamepad-button--clickable">→</i>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {selectedSuggestion === index && (
+                                                    <div className="gamepad-button-wrapper">
+                                                        <i className="gamepad-button gamepad-button-playstation gamepad-button-playstation--cross gamepad-button-playstation--variant-ps1 gamepad-button--clickable">X</i>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="mt-4 text-sm text-gray-400 flex justify-between flex-wrap">
+                                    <span>↑/↓: Navigate</span>
+                                    <span>←/→: Adjust value</span>
+                                    <span>X: Select</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Input form */}
@@ -469,16 +662,35 @@ export default function Home() {
                     </form>
                 </div>
             </main>
+            <div className="fixed inset-0 flex justify-center items-center pointer-events-none z-50">
+                <div style={{ transform: "translateY(-40px)" }}>
+                    <img style={{ width: "220px", margin: "0 auto" }} src="https://png.pngtree.com/png-vector/20221216/ourmid/pngtree-luxury-vs-versus-challenge-against-transparent-clipart-background-png-image_6527640.png" alt="vs" />
+
+                    {/* Notification when blur mode is active */}
+                    {/*blurModeActive && (
+                        <div className="text-white text-xs bg-black bg-opacity-70 p-2 rounded-md mt-2 text-center animate-pulse">
+                            {activePlayer === 'p1'
+                                ? "P1 view active. BOTH players must open eyes to exit blind mode."
+                                : "P2 view active. BOTH players must open eyes to exit blind mode."}
+                        </div>
+                    )*/}
+                </div>
+            </div>
+
             <main
                 className="flex-1 upper-holder flex flex-col max-w-2xl mx-auto w-full py-10"
                 style={{
+                    filter: (blurModeActive && activePlayer !== 'p2') ? 'blur(7px)' : 'none',
                     transition: 'filter 0.3s ease'
                 }}
             >
                 <div className="sticky top-0 z-10 backdrop-blur-sm">
                     <div
                         style={{justifyContent: "space-between"}}
+                        className={`flex max-w-2xl mx-auto items-center ${(blurModeActive && activePlayer === 'p2') ? 'border-b-2 border-blue-500 pb-1' : ''}`}
                     >
+                        <img className="eye-on-2"  onClick={() => {handleBlind2()}} width="40" src="./eye-on.png" />
+                        <img className="eye-off-2 hidden" onClick={() => {handleBlind2()}} width="40" src="./eye-off.png" />
                         <div style={{textAlign: "right"}} className="text-white">P2: (0x123...321) 100 ETH 100,000 USD</div>
                     </div>
                     <div className="mb-3 text-white" style={{textAlign: "right"}}>
@@ -486,11 +698,17 @@ export default function Home() {
                     </div>
                 </div>
                 <div
+                    style={{
+                        background: isPageLoading ? "none" : "url(./vitalik2.jpg)",
+                        backgroundColor: isPageLoading ? "rgba(0,0,0,0.5)" : "transparent",
+                        backgroundSize: "cover"
+                    }}
                     className="flex-1 bg-cover chat-window overflow-y-auto p-4 space-y-4 border-2 border-gray-600 border-gray-600 rounded-xl">
                     {isPageLoading ? (
                         <div className="flex h-full justify-center items-center">
                             <div className="bg-gray-800 bg-opacity-80 rounded-lg px-6 py-4 text-white">
                                 <div className="flex flex-col items-center gap-2">
+                                    <img width="80" height="80" src="./snail.gif"></img>
                                     <span className="text-lg font-semibold mt-2">Generating...</span>
                                 </div>
                             </div>
@@ -526,6 +744,7 @@ export default function Home() {
                                             </div>
                                         ) : (
                                             <div className="flex items-center gap-2">
+                                                <img width="50" height="50" src="./snail.gif"></img>
                                                 <span>Thinking...</span>
                                             </div>
                                         )}
