@@ -37,6 +37,61 @@ CORS(app, resources={r"/*/*": {
 
 default_openrouter_ai_model = "google/gemini-2.0-flash-lite-001"
 
+# Token mapping for CoinGecko API IDs
+# consider to use 1inch API service later
+TOKEN_ID_MAPPING = {
+    "ETH": "ethereum",
+    "WETH": "weth",
+    "USDC": "usd-coin",
+    "USD": "usd-coin",
+    "USDT": "tether",
+    "DAI": "dai",
+    "WBTC": "wrapped-bitcoin",
+    "BTC": "bitcoin",
+    "LINK": "chainlink",
+    "UNI": "uniswap",
+    "AAVE": "aave",
+    "SNX": "synthetix-network-token",
+    "MKR": "maker",
+    "COMP": "compound-governance-token",
+    "YFI": "yearn-finance",
+    "SUSHI": "sushi",
+    "WISE": "wise-token"
+}
+
+async def get_token_price(token_symbol):
+    """Get token price in USD from CoinGecko API"""
+    token_id = TOKEN_ID_MAPPING.get(token_symbol.upper())
+    if not token_id:
+        logging.warning(f"No mapping found for token symbol: {token_symbol}")
+        return None
+
+    url = f"https://api.coingecko.com/api/v3/simple/price?ids={token_id}&vs_currencies=usd"
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    if token_id in data and 'usd' in data[token_id]:
+                        return data[token_id]['usd']
+                logging.warning(f"Failed to get price for {token_symbol}: {await response.text()}")
+                return None
+    except Exception as e:
+        logging.error(f"Error fetching price for {token_symbol}: {str(e)}")
+        return None
+
+async def calculate_token_rate(from_token, to_token, from_amount=1.0):
+    """Calculate the exchange rate between two tokens"""
+    from_price = await get_token_price(from_token)
+    to_price = await get_token_price(to_token)
+
+    if from_price is None or to_price is None:
+        return None
+
+    # Calculate how much of to_token you get for from_amount of from_token
+    rate = (from_price / to_price) * float(from_amount)
+    return rate
+
 class CryptoTradingAssistant:
     def __init__(self):
         self.OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
@@ -59,7 +114,11 @@ class CryptoTradingAssistant:
             try:
                 # Calculate expected output amount
                 print("making rate")
-                rate = 100
+                rate = await calculate_token_rate(
+                    swap_info["inputToken"],
+                    swap_info["outputToken"],
+                    float(swap_info["inputAmount"])
+                )
                 if rate:
                     swap_info["outputAmount"] = f"{rate:.6f}"
                     swap_info["rate"] = f"1 {swap_info['inputToken']} ≈ {rate/float(swap_info['inputAmount']):.6f} {swap_info['outputToken']}"
