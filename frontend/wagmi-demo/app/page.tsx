@@ -1,19 +1,17 @@
 'use client';
 
 import Balance from 'components/Balance';
-import BlockNumber from 'components/BlockNumber';
+// import BlockNumber from 'components/BlockNumber';
 import Button from 'components/Button';
 // import ContractEvent from 'components/ContractEvent';
 // import ContractRead from 'components/ContractRead';
 // import ContractReads from 'components/ContractReads';
-// import ContractWrite from 'components/ContractWrite';
 // import EnsAddress from 'components/EnsAddress';
 // import EnsAvatar from 'components/EnsAvatar';
 import EnsName from 'components/EnsName';
 // import EnsResolver from 'components/EnsResolver';
 // import FeeData from 'components/FeeData';
 // import PublicClient from 'components/PublicClient';
-// import SendTransaction from 'components/SendTransaction';
 // import SignMessage from 'components/SignMessage';
 // import SignTypedData from 'components/SignTypedData';
 // import Signer from 'components/Signer';
@@ -24,27 +22,100 @@ import EnsName from 'components/EnsName';
 // import WalletClient from 'components/WalletClient';
 // import WatchPendingTransactions from 'components/WatchPendingTransactions';
 import { shorten } from 'lib/utils';
-import Image from 'next/image';
+// import Image from 'next/image';
 import { useAccount, useDisconnect } from 'wagmi';
-
 import { usePrivy, useWallets } from '@privy-io/react-auth';
 import { useSetActiveWallet } from '@privy-io/wagmi';
-
-import wagmiPrivyLogo from '../public/wagmi_privy_logo.png';
+// import wagmiPrivyLogo from '../public/wagmi_privy_logo.png';
+import { useEffect, useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { useEnsName } from 'wagmi';
 
 const MonoLabel = ({ label }: { label: string }) => {
     return <span className="rounded-xl bg-slate-200 px-2 py-1 font-mono">{label}</span>;
 };
 
 export default function Home() {
+    // Router
+    const router = useRouter();
+
     // Privy hooks
     const { ready, user, authenticated, login, connectWallet, logout, linkWallet } = usePrivy();
     const { wallets, ready: walletsReady } = useWallets();
 
     // WAGMI hooks
     const { address, isConnected, isConnecting, isDisconnected } = useAccount();
+    const { data: ensName } = useEnsName({ address });
     const { disconnect } = useDisconnect();
     const { setActiveWallet } = useSetActiveWallet();
+
+    // Menu state
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [actionMessage, setActionMessage] = useState('');
+    // Add state for toggling main content visibility
+    const [isMainVisible, setIsMainVisible] = useState(false);
+
+    // Menu items for reference
+    const menuItems = [
+        'CONNECT WALLET',
+        'SPECTATOR MODE',
+        'PLAYER 1 VS PLAYER 2',
+        'CHARACTER SELECT',
+        'SETTINGS'
+    ];
+
+    // Set up keyboard navigation
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            switch (e.key) {
+                case 'ArrowUp':
+                    e.preventDefault();
+                    setCurrentIndex(prevIndex =>
+                        (prevIndex - 1 + menuItems.length) % menuItems.length
+                    );
+                    break;
+
+                case 'ArrowDown':
+                    e.preventDefault();
+                    setCurrentIndex(prevIndex =>
+                        (prevIndex + 1) % menuItems.length
+                    );
+                    break;
+
+                case 'Enter':
+                case ' ':
+                    e.preventDefault();
+                    // confirmSelection(currentIndex);
+                    break;
+            }
+        };
+
+        // Add event listener
+        window.addEventListener('keydown', handleKeyDown);
+
+        // Remove event listener on cleanup
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [currentIndex]);
+
+    // Toggle main content visibility
+    const toggleMainContent = (e: React.MouseEvent) => {
+        e.preventDefault(); // Prevent the default link behavior
+        setIsMainVisible(prev => !prev);
+    };
+
+    // Set active class handler for menu items
+    const getMenuItemClass = (index: number) => {
+        return `menu-item ${currentIndex === index ? 'active' : ''}`;
+    };
+
+    // Handle mouse hover
+    const handleMouseEnter = (index: number) => {
+        if (currentIndex !== index) {
+            setCurrentIndex(index);
+        }
+    };
 
     if (!ready) {
         return null;
@@ -52,14 +123,83 @@ export default function Home() {
 
     return (
         <>
-            <main className="min-h-screen bg-slate-200 p-4 text-slate-800">
-                <Image
-                    className="mx-auto rounded-lg"
-                    src={wagmiPrivyLogo}
-                    alt="wagmi x privy logo"
-                    width={400}
-                    height={100}
-                />
+            <section className="splash-screen load">
+                <div className="title">
+                    <h1 className="title-top"><span className="big">E</span>thereum</h1>
+                    <h1 className="title-bottom"><span className="big">F</span>ighte<span className="big">R</span></h1>
+                </div>
+
+                <div className="buttons grey-with-red flex-center" style={{ marginTop: '60px' }}>
+                    <a
+                        id="menu-connect"
+                        className={getMenuItemClass(0)}
+                        onMouseEnter={() => handleMouseEnter(0)}
+                    >
+                        {isConnected ? 'Join Online' : 'Connect Wallet'}
+                    </a>
+                    <a
+                        id="menu-spectator"
+                        className={getMenuItemClass(1)}
+                        onMouseEnter={() => handleMouseEnter(1)}
+                    >
+                        Spectator Mode
+                    </a>
+                    <a
+                        id="menu-pvp"
+                        className={getMenuItemClass(2)}
+                        onMouseEnter={() => handleMouseEnter(2)}
+                    >
+                        {isConnected ? (
+                            <span>
+                                {wallets.length > 1 ? (
+                                    <>
+                                        {address && ensName ? ensName : shorten(address || '')} vs {
+                                            (() => {
+                                                const secondWallet = wallets.find(wallet => wallet.address !== address);
+                                                return secondWallet ? shorten(secondWallet.address) : 'Player 2';
+                                            })()
+                                        }
+                                    </>
+                                ) : (
+                                    <>{address && ensName ? ensName : shorten(address || '')} vs Player 2</>
+                                )}
+                            </span>
+                        ) : 'Player 1 vs Player 2'}
+                    </a>
+                    <a
+                        id="menu-agents"
+                        className={getMenuItemClass(3)}
+                        onMouseEnter={() => handleMouseEnter(3)}
+                    >
+                        Character Select
+                    </a>
+                    <a
+                        id="menu-settings"
+                        className={getMenuItemClass(4)}
+                        onMouseEnter={() => handleMouseEnter(4)}
+                    >
+                        Settings
+                    </a>
+                </div>
+
+                {actionMessage && (
+                    <div className="prompt-message">
+                        {actionMessage}
+                    </div>
+                )}
+
+                <div className="bottom super-bottom">
+                    <div className="music grey-with-red">
+                        <span>Music OFF</span>
+                    </div>
+                    <a href="#" onClick={toggleMainContent}>
+                        <span className="yellow">©</span>
+                        <span className="yellow-with-darkyellow"> ETHGLOBAL 2025 TAIPEI</span>
+                    </a>
+                    <div className="grey-with-red">Credit <span className="yellow-with-darkyellow">1</span></div>
+                </div>
+            </section>
+            <main className={isMainVisible ? "min-h-screen bg-slate-200 p-4 text-slate-800" : "hidden min-h-screen bg-slate-200 p-4 text-slate-800"}>
                 <p className="my-4 text-center">
                     This demo showcases how you can integrate{' '}
                     <a href="https://wagmi.sh/" className="font-medium underline">
@@ -162,12 +302,12 @@ export default function Home() {
                                 <EnsAvatar />
                                 <EnsResolver />
                                 <SwitchNetwork />
-                                <BlockNumber />
-                                <SendTransaction />
-                                <ContractRead />
-                                <ContractReads />
-                                <ContractWrite />
-                                <ContractEvent />
+                                <BlockNumber />*/}
+                                {/*<SendTransaction />*/}
+                                {/*<ContractRead />
+                                <ContractReads />*/}
+                                {/*<ContractWrite />*/}
+                                {/*<ContractEvent />
                                 <FeeData />
                                 <Token />
                                 <Transaction />
