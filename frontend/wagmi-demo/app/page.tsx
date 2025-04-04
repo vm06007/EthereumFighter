@@ -51,7 +51,8 @@ export default function Home() {
 
     // Menu state
     const [currentIndex, setCurrentIndex] = useState(0);
-    const [actionMessage, setActionMessage] = useState('');
+    // const [actionMessage, setActionMessage] = useState('');
+    const [isMusicOn, setIsMusicOn] = useState(true);
     // Add state for toggling main content visibility
     const [isMainVisible, setIsMainVisible] = useState(false);
 
@@ -85,7 +86,7 @@ export default function Home() {
                 case 'Enter':
                 case ' ':
                     e.preventDefault();
-                    // confirmSelection(currentIndex);
+                    confirmSelection(currentIndex);
                     break;
             }
         };
@@ -103,6 +104,71 @@ export default function Home() {
     const toggleMainContent = (e: React.MouseEvent) => {
         e.preventDefault(); // Prevent the default link behavior
         setIsMainVisible(prev => !prev);
+    };
+
+    // Handle menu item selection
+    const confirmSelection = (index: number) => {
+        const selectedItem = menuItems[index];
+
+
+        console.log("CONFIRMED:", selectedItem);
+
+        // Set action message based on selection
+        switch (index) {
+            case 0: // Connect Wallet or Start Game
+                if (isConnected) {
+                    setTimeout(() => {
+                        router.push('/world');
+                    }, 500);
+                } else {
+                    connectWallet();
+                }
+                break;
+            case 1: // Spectator Mode
+                // setActionMessage('ENTERING SPECTATOR MODE...');
+                // Add actual action here
+                break;
+            case 2: // Player vs Player
+                if (isConnected) {
+                    if (wallets.length > 1) {
+                        // If two wallets are already connected, go directly to game
+                        // setActionMessage('STARTING GAME...');
+                        setTimeout(() => {
+                            router.push('/world');
+                        }, 500);
+                    } else {
+                        // Only one wallet connected, connect another
+                        // setActionMessage('CONNECTING SECOND WALLET...');
+                        connectWallet();
+                        setTimeout(() => {
+                            if (wallets.length > 1) {
+                                router.push('/world');
+                            }
+                        }, 3000);
+                    }
+                } else {
+                    // setActionMessage('STARTING LOCAL MULTIPLAYER...');
+                    connectWallet();
+                }
+                break;
+            case 3: // Character Select
+                if (isConnected) {
+                    // setActionMessage('LOADING CHARACTER SELECT...');
+                    setTimeout(() => {
+                        router.push('/agents');
+                    }, 500);
+                } else {
+                    // setActionMessage('CONNECT WALLET FIRST');
+                    setTimeout(() => {
+                        connectWallet();
+                    }, 1000);
+                }
+                break;
+            case 4: // Settings
+                // setActionMessage('OPENING SETTINGS...');
+                // Add actual action here
+                break;
+        }
     };
 
     // Set active class handler for menu items
@@ -133,6 +199,7 @@ export default function Home() {
                     <a
                         id="menu-connect"
                         className={getMenuItemClass(0)}
+                        onClick={() => confirmSelection(0)}
                         onMouseEnter={() => handleMouseEnter(0)}
                     >
                         {isConnected ? 'Join Online' : 'Connect Wallet'}
@@ -140,6 +207,7 @@ export default function Home() {
                     <a
                         id="menu-spectator"
                         className={getMenuItemClass(1)}
+                        onClick={() => confirmSelection(1)}
                         onMouseEnter={() => handleMouseEnter(1)}
                     >
                         Spectator Mode
@@ -147,6 +215,7 @@ export default function Home() {
                     <a
                         id="menu-pvp"
                         className={getMenuItemClass(2)}
+                        onClick={() => confirmSelection(2)}
                         onMouseEnter={() => handleMouseEnter(2)}
                     >
                         {isConnected ? (
@@ -169,6 +238,7 @@ export default function Home() {
                     <a
                         id="menu-agents"
                         className={getMenuItemClass(3)}
+                        onClick={() => confirmSelection(3)}
                         onMouseEnter={() => handleMouseEnter(3)}
                     >
                         Character Select
@@ -176,21 +246,15 @@ export default function Home() {
                     <a
                         id="menu-settings"
                         className={getMenuItemClass(4)}
+                        onClick={() => confirmSelection(4)}
                         onMouseEnter={() => handleMouseEnter(4)}
                     >
                         Settings
                     </a>
                 </div>
-
-                {actionMessage && (
-                    <div className="prompt-message">
-                        {actionMessage}
-                    </div>
-                )}
-
                 <div className="bottom super-bottom">
                     <div className="music grey-with-red">
-                        <span>Music OFF</span>
+                        Music <span className="yellow-with-darkyellow">{isMusicOn ? 'ON' : 'OFF'}</span>
                     </div>
                     <a href="#" onClick={toggleMainContent}>
                         <span className="yellow">©</span>
