@@ -68,7 +68,14 @@ async def get_token_price(token_symbol):
 
     url = f"https://api.coingecko.com/api/v3/simple/price?ids={token_id}&vs_currencies=usd"
     try:
-        async with aiohttp.ClientSession() as session:
+        # Create SSL context with certifi certificates
+        ssl_context = ssl.create_default_context(cafile=certifi.where())
+
+        # Create connector with the SSL context
+        connector = aiohttp.TCPConnector(ssl=ssl_context)
+
+        # Use the connector in the ClientSession
+        async with aiohttp.ClientSession(connector=connector) as session:
             async with session.get(url) as response:
                 if response.status == 200:
                     data = await response.json()
@@ -158,6 +165,7 @@ class CryptoTradingAssistant:
         return response
 
     async def ask_openrouter(self, prompt, model):
+        # Create SSL context with certifi certificates
         ssl_context = ssl.create_default_context(cafile=certifi.where())
         headers = {"Authorization": f"Bearer {self.OPENROUTER_API_KEY}"}
         data = {
@@ -167,8 +175,12 @@ class CryptoTradingAssistant:
                 {"role": "user", "content": prompt}
             ]
         }
-        async with aiohttp.ClientSession() as session:
-            async with session.post(self.OPENROUTER_API_URL, json=data, headers=headers, ssl=ssl_context) as response:
+        # Create connector with the SSL context
+        connector = aiohttp.TCPConnector(ssl=ssl_context)
+
+        # Use the connector in the ClientSession
+        async with aiohttp.ClientSession(connector=connector) as session:
+            async with session.post(self.OPENROUTER_API_URL, json=data, headers=headers) as response:
                 if response.status == 200:
                     res = await response.json()
                     print(res)
