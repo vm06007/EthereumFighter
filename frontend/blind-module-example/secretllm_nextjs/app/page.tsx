@@ -52,7 +52,7 @@ export default function Home() {
     };
 
     return (
-        <div className="flex flex-col min-h-screen">
+        <div className="flex flex-row min-h-screen">
             <main className="flex-1 flex flex-col max-w-2xl mx-auto w-full py-10">
                 <div className="sticky top-0 z-10 backdrop-blur-sm">
                     <div className="max-w-2xl mx-auto py-6">
