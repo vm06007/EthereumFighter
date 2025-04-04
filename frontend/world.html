@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2D World Map - Fictional TaiPei</title>
+<style>
+  body {
+    background: url("./default.jpg");
+    backdrop-filter: brightness(0.2) blur(2px);
+    background-size: cover;
+    margin: 0; display: flex; justify-content: center; align-items: center; height: 110vh; overflow: hidden; background-color: #263755;
+  }
+  .game-container {
+    position: fixed;
+    top: 0px;
+    height: 70vh;
+    overflow: hidden;
+    transform: scale(1.1);
+    filter: brightness(0.8) contrast(1.4);
+    background-image: url('./world-0.jpg');
+    width: 800px;
+    height: 100vh;
+    background-size: contain;
+    background-color: #2e8b57;
+    overflow: hidden;
+  }
+  .tile {
+    width: 10px;
+    height: 10px;
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 8px;
+  }
+  .road { background-color: rgba(200, 200, 200, 0.8); }
+  .tree { background-color: #228b22; content: "🌳"; }
+  .temple { background-color: red; content: "🏯"; }
+  .wall_visible { background-color: #555; content: "🧱"; }
+  .wall {  content: "🧱"; }
+  .river { background-color: #1e90ff; content: "🌊"; }
+  .bridge { background-color: #8b4513; content: "🌉"; }
+  .character {
+    image-rendering: pixelated;
+    width: 40px;
+    height: 64px;
+    background-image: url('https://s3-us-west-2.amazonaws.com/s.cdpn.io/21542/DemoRpgCharacter.png');
+    background-size: 160px 256px;
+    background-position: 0 0;
+    position: absolute;
+    transition: transform 0.3s ease-in-out;
+    z-index: 10;
+    /* Center character on tile */
+    transform-origin: center bottom;
+    margin-left: -15px;
+    margin-top: -54px;
+  }
+  .modal {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    z-index: 20;
+    display: none;
+  }
+</style>
+</head>
+<body>
+<div class="game-container" id="gameContainer">
+  <!-- Character elements will be dynamically created -->
+</div>
+<div class="modal" id="templeModal">
+  <h2>Temple Details</h2>
+  <p>USDC Locked: 1000</p>
+  <p>Lock Duration: 30 days</p>
+  <button onclick="closeModal()">Close</button>
+</div>
+<script src="world.js"></script>
+<script>
+
+  function vibrateController() {
+    // Get the list of connected gamepads
+    const gamepads = navigator.getGamepads();
+
+    // Find the first connected gamepad (PS4 controller)
+    const gamepad = Array.from(gamepads).find(gp => gp !== null);
+
+    if (!gamepad) {
+      console.log("No gamepad detected");
+      return;
+    }
+
+    // Check if the gamepad has haptic actuators (vibration)
+    if (gamepad.hapticActuators && gamepad.hapticActuators.length > 0) {
+      // Trigger vibration with intensity and duration
+      gamepad.hapticActuators[0].pulse(1.0, 500); // Full intensity for 500ms
+    } else if (gamepad.vibrationActuator) {
+      // Alternative API used in some browsers
+      gamepad.vibrationActuator.playEffect('dual-rumble', {
+        startDelay: 0,
+        duration: 500,
+        weakMagnitude: 1.0,
+        strongMagnitude: 1.0
+      });
+    } else {
+      console.log("This gamepad doesn't support vibration");
+    }
+  }
+
+  const gameContainer = document.getElementById('gameContainer');
+  const templeModal = document.getElementById('templeModal');
+
+  // WebSocket connection
+  const socket = new WebSocket('ws://localhost:8080');
+
+  // Store all characters in the game
+  const characters = {};
+
+  // Store character states for all players
+  const characterStates = {};
+
+  // Store current player's ID and position
+  let myClientId = null;
+  let myPosition = { x: 10, y: 20 };
+  let myFrame = 0;
+  let myDirection = 0; // 0=down, -128=up, -64=right, -192=left
+
+  // WebSocket event handlers
+  socket.onopen = () => {
+    console.log('Connected to the WebSocket server');
+  };
+
+  socket.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+
+    // Handle receiving client ID and initial position
+    if (data.clientId && !myClientId && data.position) {
+      myClientId = data.clientId;
+      myPosition = data.position;
+
+      // Create player state
+      characterStates[myClientId] = {
+        position: myPosition,
+        frame: 0,
+        direction: 0
+      };
+
+      // Create character for the current player
+      createCharacter(myClientId, myPosition);
+      updateCharacterPosition(characters[myClientId], myPosition);
+    }
+
+    // Handle receiving updates from players
+    if (data.clientId && data.characterState) {
+      const clientId = data.clientId;
+      const state = data.characterState;
+
+      // Create or update the character state
+      if (!characterStates[clientId]) {
+        characterStates[clientId] = {
+          position: state.position,
+          frame: state.frame,
+          direction: state.direction
+        };
+      } else {
+        characterStates[clientId].position = state.position;
+        characterStates[clientId].frame = state.frame;
+        characterStates[clientId].direction = state.direction;
+      }
+
+      // Create character if it doesn't exist
+      if (!characters[clientId]) {
+        createCharacter(clientId, state.position);
+      }
+
+      // Update the character appearance and position
+      const character = characters[clientId];
+      updateCharacterPosition(character, state.position);
+
+      // Update sprite animation
+      character.style.backgroundPosition = `-${state.frame * 40}px ${state.direction}px`;
+    }
+  };
+
+  socket.onclose = () => {
+    console.log('Disconnected from the WebSocket server');
+  };
+
+  // Function to create a character element
+  function createCharacter(clientId, position) {
+    if (characters[clientId]) return; // Don't create duplicate characters
+
+    const character = document.createElement('div');
+    character.className = 'character';
+    character.id = `character-${clientId}`;
+
+    // Add name label
+    const nameLabel = document.createElement('div');
+    nameLabel.style.position = 'absolute';
+    nameLabel.style.top = '-20px';
+    nameLabel.style.left = '50%';
+    nameLabel.style.transform = 'translateX(-50%)';
+    nameLabel.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
+    nameLabel.style.color = '#fff';
+    nameLabel.style.padding = '2px 5px';
+    nameLabel.style.borderRadius = '3px';
+    nameLabel.style.fontSize = '12px';
+
+    // Use client ID as name (or shorten it for display)
+    nameLabel.textContent = clientId === myClientId ? 'You' : clientId.substr(0, 6);
+
+    character.appendChild(nameLabel);
+    gameContainer.appendChild(character);
+
+    characters[clientId] = character;
+  }
+
+  function renderMap() {
+    // Clear all except character elements
+    const charElements = Array.from(gameContainer.querySelectorAll('.character'));
+    charElements.forEach(char => {
+      if (char.parentNode === gameContainer) {
+        gameContainer.removeChild(char);
+      }
+    });
+
+    gameContainer.innerHTML = '';
+
+    map.forEach((row, y) => {
+      row.forEach((tile, x) => {
+        const div = document.createElement('div');
+        div.style.top = `${y * 10}px`;
+        div.style.left = `${x * 10}px`;
+        div.className = 'tile' + (tile === 1 ? ' temple' : tile === 2 ? ' road' : tile === 3 ? ' wall' : tile === 4 ? ' river' : tile === 5 ? ' bridge' : '');
+        if (tile === 1) div.textContent = "🏯";
+        if (tile === 3) div.textContent = "";
+        if (tile === 4) div.textContent = "🌊";
+        if (tile === 5) div.textContent = "🌉";
+        gameContainer.appendChild(div);
+      });
+    });
+
+    // Add character elements back
+    for (const clientId in characters) {
+      gameContainer.appendChild(characters[clientId]);
+    }
+  }
+
+  function moveCharacter(dx, dy) {
+    if (!myClientId) return;
+
+    // Calculate direction based on movement
+    if (dx === 1) myDirection = -64; // Right
+    if (dx === -1) myDirection = -192; // Left
+    if (dy === 1) myDirection = 0; // Down
+    if (dy === -1) myDirection = -128; // Up
+
+    // Update animation frame
+    myFrame = (myFrame + 1) % 4;
+
+    // Update character sprite
+    if (characters[myClientId]) {
+      characters[myClientId].style.backgroundPosition = `-${myFrame * 40}px ${myDirection}px`;
+    }
+
+    // Calculate new position
+    const newX = myPosition.x + dx;
+    const newY = myPosition.y + dy;
+
+    if (newX >= 0 && newY >= 0 && newX < 80 && newY < 80 && ![1, 3, 4].includes(map[newY][newX])) {
+      // Update position
+      myPosition.x = newX;
+      myPosition.y = newY;
+
+      if (characters[myClientId]) {
+        updateCharacterPosition(characters[myClientId], myPosition);
+      }
+
+      // Update my character state
+      characterStates[myClientId] = {
+        position: myPosition,
+        frame: myFrame,
+        direction: myDirection
+      };
+
+      // Send state update to the server
+      sendStateUpdate();
+    }
+  }
+
+  function updateCharacterPosition(character, position) {
+    character.style.transform = `translate(${position.x * 10}px, ${position.y * 10}px)`;
+  }
+
+  function sendStateUpdate() {
+    if (socket.readyState === WebSocket.OPEN && myClientId) {
+      socket.send(JSON.stringify({
+        clientId: myClientId,
+        characterState: characterStates[myClientId]
+      }));
+    }
+  }
+
+  function openModal(position) {
+    vibrateController();
+    const { x, y } = position;
+    const positions = [
+      [x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]
+    ];
+    const templePos = positions.find(([px, py]) => map[py] && map[py][px] === 1);
+    if (templePos) {
+      const [tx, ty] = templePos;
+      templeModal.style.left = `${tx * 10 + 20}px`;
+      templeModal.style.top = `${ty * 10}px`;
+      templeModal.style.display = 'block';
+    }
+  }
+
+  function closeModal() {
+    templeModal.style.display = 'none';
+  }
+
+  function isNextToTemple(position) {
+    const { x, y } = position;
+    const positions = [
+      [x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]
+    ];
+    return positions.some(([px, py]) => map[py] && map[py][px] === 1);
+  }
+
+  // Track key states to prevent key repeat delay
+  const keyState = {};
+
+  document.addEventListener('keydown', (event) => {
+    keyState[event.code] = true;
+
+    // Player controls
+    switch (event.key) {
+      case 'ArrowUp':
+        moveCharacter(0, -1);
+        break;
+      case 'ArrowDown':
+        moveCharacter(0, 1);
+        break;
+      case 'ArrowLeft':
+        moveCharacter(-1, 0);
+        break;
+      case 'ArrowRight':
+        moveCharacter(1, 0);
+        break;
+      case 'Enter':
+        if (isNextToTemple(myPosition)) openModal(myPosition);
+        break;
+      case 'Escape':
+        closeModal();
+        break;
+    }
+  });
+
+  document.addEventListener('keyup', (event) => {
+    keyState[event.code] = false;
+  });
+
+  renderMap();
+</script>
+</body>
+</html>
