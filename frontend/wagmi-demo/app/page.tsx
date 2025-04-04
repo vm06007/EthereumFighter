@@ -3,26 +3,26 @@
 import Balance from 'components/Balance';
 import BlockNumber from 'components/BlockNumber';
 import Button from 'components/Button';
-import ContractEvent from 'components/ContractEvent';
-import ContractRead from 'components/ContractRead';
-import ContractReads from 'components/ContractReads';
-import ContractWrite from 'components/ContractWrite';
-import EnsAddress from 'components/EnsAddress';
-import EnsAvatar from 'components/EnsAvatar';
+// import ContractEvent from 'components/ContractEvent';
+// import ContractRead from 'components/ContractRead';
+// import ContractReads from 'components/ContractReads';
+// import ContractWrite from 'components/ContractWrite';
+// import EnsAddress from 'components/EnsAddress';
+// import EnsAvatar from 'components/EnsAvatar';
 import EnsName from 'components/EnsName';
-import EnsResolver from 'components/EnsResolver';
-import FeeData from 'components/FeeData';
-import PublicClient from 'components/PublicClient';
-import SendTransaction from 'components/SendTransaction';
-import SignMessage from 'components/SignMessage';
-import SignTypedData from 'components/SignTypedData';
-import Signer from 'components/Signer';
-import SwitchNetwork from 'components/SwitchNetwork';
-import Token from 'components/Token';
-import Transaction from 'components/Transaction';
-import WaitForTransaction from 'components/WaitForTransaction';
-import WalletClient from 'components/WalletClient';
-import WatchPendingTransactions from 'components/WatchPendingTransactions';
+// import EnsResolver from 'components/EnsResolver';
+// import FeeData from 'components/FeeData';
+// import PublicClient from 'components/PublicClient';
+// import SendTransaction from 'components/SendTransaction';
+// import SignMessage from 'components/SignMessage';
+// import SignTypedData from 'components/SignTypedData';
+// import Signer from 'components/Signer';
+// import SwitchNetwork from 'components/SwitchNetwork';
+// import Token from 'components/Token';
+// import Transaction from 'components/Transaction';
+// import WaitForTransaction from 'components/WaitForTransaction';
+// import WalletClient from 'components/WalletClient';
+// import WatchPendingTransactions from 'components/WatchPendingTransactions';
 import { shorten } from 'lib/utils';
 import Image from 'next/image';
 import { useAccount, useDisconnect } from 'wagmi';
@@ -153,11 +153,11 @@ export default function Home() {
                                 </p>
 
                                 <Balance />
-                                <Signer />
+                                <EnsName />
+                                {/*<Signer />
                                 <SignMessage />
                                 <SignTypedData />
                                 <PublicClient />
-                                <EnsName />
                                 <EnsAddress />
                                 <EnsAvatar />
                                 <EnsResolver />
@@ -173,7 +173,7 @@ export default function Home() {
                                 <Transaction />
                                 <WatchPendingTransactions />
                                 <WalletClient />
-                                <WaitForTransaction />
+                                <WaitForTransaction />*/}
 
                                 <h2 className="mt-6 text-2xl">useDisconnect</h2>
                                 <Button onClick_={disconnect} cta="Disconnect from WAGMI" />
