@@ -28,6 +28,21 @@ euint256 player1Asset1EncreptedBalance;
 euint256 player1Asset2EncreptedBalance;
 euint256 player2Asset1EncreptedBalance;
 euint256 player2Asset2EncreptedBalance;
+
+
+
+// games rules 
+struct GameRules {
+    uint256 gameStakingAmount;
+    uint256 gameDuration;
+    uint256 gameStartTime;
+    uint256 gameEndTime;
+    /// here we will ba adding a basic rule: players should hold the assets for a certain amount
+    // the two arrays should be the same length
+    address [] asstes;
+    uint256 [] assetAmounts;
+}
+GameRules gameRules;
 // events go here
 
 
