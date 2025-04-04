@@ -63,6 +63,11 @@ body {
     bottom: 0px
 }
 
+.bg-cover {
+    background-size: cover !important;
+}
+
+
 body {
     color: white;
     background-color: black;
@@ -72,6 +77,8 @@ body {
     text-transform: uppercase;
     margin: 0;
     color: rgb(var(--foreground-rgb));
+    background: url(/default.jpg);
+    background-size: contain !important;
     font-family: "Press Start 2P", sans-serif !important;
     backdrop-filter: brightness(0.2) blur(2px);
 }
@@ -142,8 +149,7 @@ h1 {
     margin: auto;
 }
 
-.buttons a,
-.buttons div {
+.buttons a, .buttons div {
     display: block;
     margin-bottom: 0.75rem;
     padding: 0.4rem;
@@ -174,15 +180,101 @@ h1 {
 }
 
 @keyframes confirmPulse {
-    0% {
-        transform: scale(1.05);
+    0% { transform: scale(1.05); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1.05); }
+}
+
+.menu-separator {
+    opacity: 0.7;
+    cursor: default;
+    margin-bottom: 0.5rem;
+    padding: 0.2rem;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+.bottom {
+    display: flex;
+    height: 10vh;
+    transform: scale(1.2);
+    justify-content: space-around;
+}
+
+.credit {
+    margin-top: 10px;
+    pointer-events: none;
+}
+
+.grey-with-red {
+    color: rgb(192, 192, 192);
+    text-shadow: 2px 2px 0 rgb(192, 11, 11);
+}
+
+.purple-with-blue {
+    color: rgb(147, 154, 255);
+    text-shadow: 2px 2px 0 rgb(47, 61, 255);
+}
+
+.yellow-with-darkyellow {
+    color: rgb(226, 179, 24);
+    text-shadow: 0 2px 0 rgb(107, 77, 11), 2px 0 0 rgb(151, 109, 19),
+        2px 2px 0 rgb(151, 109, 19);
+}
+
+.yellow {
+    color: rgb(226, 179, 24);
+}
+
+.big {
+    font-size: 6rem;
+}
+
+@keyframes fadeInOut {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+}
+
+@media (min-width: 400px) {
+    body {
+        font-size: 1.2rem;
     }
 
-    50% {
-        transform: scale(1.15);
+    .big {
+        font-size: 7rem;
+    }
+}
+
+@media (min-width: 600px) {
+    .big {
+        font-size: 9rem;
     }
 
-    100% {
-        transform: scale(1.05);
+    .title {
+        font-size: 3rem;
+        height: 45vh;
+    }
+
+    .buttons {
+        height: 45vh;
+    }
+
+    .title-top {
+        transform: skew(-10deg) rotate(-10deg) translateX(-2rem);
+    }
+
+    .title-bottom {
+        transform: skew(-10deg) rotate(-10deg) translateX(3rem);
+    }
+}
+
+@media (min-width: 800px) {
+    .credit {
+        position: absolute;
+        right: 50px;
+        margin-top: 0;
     }
 }
