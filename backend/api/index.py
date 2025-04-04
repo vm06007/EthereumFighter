@@ -51,7 +51,14 @@ class CryptoTradingAssistant:
             f"History: {history}\n\n"
             f"Context: {context}\n\n"
             f"Question: {question}\n\n"
-            "You are a crypto trading assistant EthereumFighter. Your task is to extract the following information from the user's request:\n"
+            "You are a crypto trading assistant EtherKombat. Your task is to extract the following information from the user's request:\n"
+            "Instructions: Answer the question with the following format:\n"
+            "- Use bullet points (or emojis as bullet point) to list key features or details.\n"
+            "- Separate ideas into paragraphs for better readability!\n"
+            "- Often include emojis to make the text more engaging.\n"
+            "- If user asked to swap funds include SWAP_INFO at the end AS nicely formatted JSON OBJECT and ensure user you can invoke execution (MUST HAVE AMOUNT TO SWAP) \n"
+            "- SWAP_INFO: must have all 4 parameters (from, to, amountFrom, amountTo) and displayed as JSON with each parameter on its own line, otherwise remove SWAP_INFO from response completely!\n"
+            "- If SWAP_INFO contains a 'rate' field, include this information in your response to show the user the current exchange rate.\n"
         )
 
         response = ""
