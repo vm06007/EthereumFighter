@@ -467,7 +467,7 @@ export default function Home() {
                 <div className="sticky top-0 z-50 backdrop-blur-sm">
                     <div
                         style={{justifyContent: "space-between"}}
-                        className={`max-w-2xl mx-auto flex items-center ${(blurModeActive && activePlayer === 'p1') ? 'border-b-2 border-red-500 pb-1' : ''}`}
+                        className={`max-w-2xl mx-auto flex items-center ${(blurModeActive && activePlayer === 'p1') ? '' : ''}`}
                     >
                         <div className="text-white">P1: (vitally.eth) 100 ETH 100,000 USD</div>
                         <img className="eye-on" onClick={() => {handleBlind()}} width="40" src="./eye-on.png" />
@@ -687,7 +687,7 @@ export default function Home() {
                 <div className="sticky top-0 z-10 backdrop-blur-sm">
                     <div
                         style={{justifyContent: "space-between"}}
-                        className={`flex max-w-2xl mx-auto items-center ${(blurModeActive && activePlayer === 'p2') ? 'border-b-2 border-blue-500 pb-1' : ''}`}
+                        className={`flex max-w-2xl mx-auto items-center ${(blurModeActive && activePlayer === 'p2') ? '' : ''}`}
                     >
                         <img className="eye-on-2"  onClick={() => {handleBlind2()}} width="40" src="./eye-on.png" />
                         <img className="eye-off-2 hidden" onClick={() => {handleBlind2()}} width="40" src="./eye-off.png" />
