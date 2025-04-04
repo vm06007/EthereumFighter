@@ -1,7 +1,6 @@
 import certifi
 import os
 import re
-from eth_account import Account
 from dotenv import load_dotenv
 from datetime import datetime
 import logging
@@ -47,11 +46,33 @@ class CryptoTradingAssistant:
     async def process_question(self, question, user_id, model):
         history = ""
         context = ""
+        swap_info = await self.recognize_swap_request_with_ai(question, model)
+
+        # If we have input token, input amount, and output token but no output amount,
+        # try to calculate the expected output amount
+        print(swap_info)
+        print("nextot ifff")
+        if (swap_info["inputToken"] and
+            swap_info["inputAmount"] and
+            swap_info["outputToken"] and
+            not swap_info["outputAmount"]):
+            try:
+                # Calculate expected output amount
+                print("making rate")
+                rate = 100
+                if rate:
+                    swap_info["outputAmount"] = f"{rate:.6f}"
+                    swap_info["rate"] = f"1 {swap_info['inputToken']} ≈ {rate/float(swap_info['inputAmount']):.6f} {swap_info['outputToken']}"
+            except Exception as e:
+                logging.error(f"Error calculating rate: {e}")
+
+        print(swap_info)
         prompt = (
             f"History: {history}\n\n"
             f"Context: {context}\n\n"
+            f"SWAP_INFO: {swap_info}\n\n"
             f"Question: {question}\n\n"
-            "You are a crypto trading assistant EtherKombat. Your task is to extract the following information from the user's request:\n"
+            "You are a crypto trading assistant EthereumFighter. Your task is to extract the following information from the user's request:\n"
             "Instructions: Answer the question with the following format:\n"
             "- Use bullet points (or emojis as bullet point) to list key features or details.\n"
             "- Separate ideas into paragraphs for better readability!\n"
@@ -116,6 +137,51 @@ class CryptoTradingAssistant:
         except Exception as e:
             logging.error(f"Error in ask_ai: {e}")
             return "An error occurred while processing your question."
+
+    async def recognize_swap_request_with_ai(self, request, model):
+        """Use AI to extract tokens from the user's request."""
+        prompt = (
+            "You are a crypto trading assistant. Your task is to extract the following information from the user's request:\n"
+            "1. TokenA: The token symbol the user wants to swap FROM (e.g., WISE, ETH, BTC).\n"
+            "2. TokenB: The token symbol the user wants to swap TO (e.g., USDT, ETH, DAI).\n"
+            "3. AmountA: The amount of TokenA the user wants to swap. If unspecified, return an empty string ''.\n"
+            "4. AmountB: The amount of TokenB the user wants to receive. If unspecified, return an empty string ''.\n\n"
+            "IMPORTANT:\n"
+            "- If the user wants to 'sell' or 'swap' a token, TokenA is the token being sold/swapped, and AmountA is the amount.\n"
+            "- If the user wants to 'buy' a token, TokenB is the token being bought, and AmountB is the amount.\n"
+            "- Return the extracted values in this exact format: TokenA: <TokenA>, TokenB: <TokenB>, AmountA: <AmountA>, AmountB: <AmountB>\n"
+            "- If any value is missing or not provided by the user, replace it with an empty string ''.\n\n"
+            f"User's request: {request}\n\n"
+            "Return only the extracted values without any extra text."
+        )
+
+        response = await self.ask_openrouter(prompt, model)
+
+        # Try to parse the response with labels
+        pattern = re.compile(
+            r"TokenA:\s*(?:\"([^\"]*)\"|'([^']*)'|([\w-]*)|())\s*,\s*"
+            r"TokenB:\s*(?:\"([^\"]*)\"|'([^']*)'|([\w-]*)|())\s*,\s*"
+            r"(?:AmountA:\s*(?:\"?([0-9.,]*)\"?)\s*,?\s*)?"
+            r"(?:AmountB:\s*(?:\"?([0-9.,]*)\"?)\s*,?\s*)?"
+            r"|(?:AmountB:\s*(?:\"?([0-9.,]*)\"?)\s*,?\s*)?"
+            r"(?:AmountA:\s*(?:\"?([0-9.,]*)\"?)\s*,?\s*)?"
+        )
+        match = pattern.search(response)
+
+        if match:
+            tokenA = (match.group(1) or match.group(2) or match.group(3) or '').upper()
+            tokenB = (match.group(5) or match.group(6) or match.group(7) or '').upper()
+            amountA = (match.group(9) or match.group(12) or '').rstrip(',')
+            amountB = (match.group(10) or match.group(11) or '').rstrip(',')
+
+            return { "inputToken": tokenA, "inputAmount": amountA, "outputToken": tokenB, "outputAmount": amountB }
+
+        return {
+            "inputToken": "",
+            "inputAmount": "",
+            "outputToken": "",
+            "outputAmount": "",
+        }
 
 crypto_assistant = CryptoTradingAssistant()
 
