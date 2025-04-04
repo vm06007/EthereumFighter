@@ -16,8 +16,6 @@ nest_asyncio.apply()
 
 app = Flask(__name__)
 
-from org_config import org_config
-from secretvaults import SecretVaultWrapper, OperationType
 os.environ["SSL_CERT_FILE"] = certifi.where()
 
 from web3 import Web3
@@ -38,24 +36,15 @@ CORS(app, resources={r"/*/*": {
     ]}
 })
 
-default_nil_ai_model = "meta-llama/Llama-3.1-8B-Instruct"
+default_openrouter_ai_model = "google/gemini-2.0-flash-lite-001"
 
 class CryptoTradingAssistant:
     def __init__(self):
-        self.NILAI_API_KEY = os.getenv("NILAI_API_KEY")
-        self.NILAI_API_URL = os.getenv("NILAI_API_URL")
-        self.NIL_SV_SCHEMA_ID = os.getenv("NIL_SECRET_VAULT_SCHEMA_ID")
+        self.OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+        self.OPENROUTER_API_URL = os.getenv("OPENROUTER_API_URL")
         self.BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-        self.DB_PATH = os.path.join(self.BASE_DIR, "tokens.db")
-        self.collection = SecretVaultWrapper(
-            org_config["nodes"],
-            org_config["org_credentials"],
-            self.NIL_SV_SCHEMA_ID,
-            operation=OperationType.STORE,
-        )
 
     async def process_question(self, question, user_id, model):
-        await self.collection.init()
         history = ""
         context = ""
         prompt = (
@@ -66,10 +55,7 @@ class CryptoTradingAssistant:
         )
 
         response = ""
-        if (model == default_nil_ai_model):
-            response = await self.ask_nilai(prompt, model)
-        else:
-            response = await self.ask_nilai(prompt, model)
+        response = await self.ask_openrouter(prompt, model)
 
         data = []
         interaction = {
@@ -82,28 +68,28 @@ class CryptoTradingAssistant:
             ],
         }
         data.append(interaction)
-        await self.collection.write_to_nodes(data)
         return response
 
-    async def ask_nilai(self, prompt, model):
+    async def ask_openrouter(self, prompt, model):
         ssl_context = ssl.create_default_context(cafile=certifi.where())
-        headers = {"Authorization": f"Bearer {self.NILAI_API_KEY}"}
-        print(f"Prompt calling nilai: {prompt}")
+        headers = {"Authorization": f"Bearer {self.OPENROUTER_API_KEY}"}
         data = {
             "model": model,
             "messages": [
-                {"role": "system", "content": "You are a crypto trading assistant. Use the provided history to maintain conversation context."},
+                {"role": "system", "content": "You are a crypto trading assistant for a EthereumFighter game where AI is pinned against each other to see who is a better trader. Use the provided history to maintain conversation context."},
                 {"role": "user", "content": prompt}
             ]
         }
         async with aiohttp.ClientSession() as session:
-            async with session.post(self.NILAI_API_URL, json=data, headers=headers, ssl=ssl_context) as response:
+            async with session.post(self.OPENROUTER_API_URL, json=data, headers=headers, ssl=ssl_context) as response:
                 if response.status == 200:
-                    reply = (await response.json()).get("choices", [{}])[0].get("message", {}).get("content", "No response received.")
+                    res = await response.json()
+                    print(res)
+                    reply = (res).get("choices", [{}])[0].get("message", {}).get("content", "No response received.")
                     logging.info(f"Received response: {reply}")
                     return reply
                 else:
-                    error_message = f"NILAI API error {response.status}: {await response.text()}"
+                    error_message = f"OpenRouter API error {response.status}: {await response.text()}"
                     logging.error(error_message)
                     return error_message
 
@@ -115,9 +101,9 @@ class CryptoTradingAssistant:
             response = ""
             print(f"Question: {question}")
             if input_model == "ask_nilai":
-                response = await self.process_question(question, user_id, default_nil_ai_model)
+                response = await self.process_question(question, user_id, default_openrouter_ai_model)
             else:
-                response = await self.process_question(question, user_id, default_nil_ai_model)
+                response = await self.process_question(question, user_id, default_openrouter_ai_model)
 
             return response
         except Exception as e:
@@ -132,7 +118,7 @@ def home():
 
 @app.route("/ask_ai/<path:question>", methods=["GET"])
 def ask_ai_get(question):
-    model = request.args.get("model", default_nil_ai_model)
+    model = request.args.get("model", default_openrouter_ai_model)
     if not question:
         return jsonify({"error": "Question is empty"}), 400
 
@@ -147,7 +133,7 @@ def ask_ai_post():
 
     data = request.get_json() or {}
     question = data.get("question", "")
-    model = data.get("model", default_nil_ai_model)
+    model = data.get("model", default_openrouter_ai_model)
 
     if not question:
         return jsonify({"error": "Question is empty"}), 400
