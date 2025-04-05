@@ -322,7 +322,6 @@ const BridgeModal = ({
 };
 
 export default function WorldPage() {
-
     const router = useRouter();
     const { address, isConnected } = useAccount();
     const { data: ensName } = useEnsName({ address });
@@ -335,9 +334,7 @@ export default function WorldPage() {
     // State for player positions
     const [player1Position, setPlayer1Position] = useState({ x: 10, y: 20 });
     const [player1Frame, setPlayer1Frame] = useState(0);
-
-     // 0=down, -128=up, -64=right, -192=left
-    const [player1Direction, setPlayer1Direction] = useState(0);
+    const [player1Direction, setPlayer1Direction] = useState(0); // 0=down, -128=up, -64=right, -192=left
 
     // State for player 2
     const [player2Position, setPlayer2Position] = useState({ x: 15, y: 20 });
@@ -358,16 +355,12 @@ export default function WorldPage() {
         setBridgeModalOpen(false);
     };
 
-    // State to store fixed wallet information for each player
-    const [player1WalletInfo, setPlayer1WalletInfo] = useState({
-        address: '',
-        ensName: ''
-    });
+    // State for bottom mapper
+    const [showBottomMapper, setShowBottomMapper] = useState(false);
 
-    const [player2WalletInfo, setPlayer2WalletInfo] = useState({
-        address: '',
-        ensName: ''
-    });
+    // State to store fixed wallet information for each player
+    const [player1WalletInfo, setPlayer1WalletInfo] = useState({ address: '', ensName: '' });
+    const [player2WalletInfo, setPlayer2WalletInfo] = useState({ address: '', ensName: '' });
 
     // References
     const gameContainerRef = useRef<HTMLDivElement>(null);
@@ -391,18 +384,6 @@ export default function WorldPage() {
     const player1Display = player1WalletInfo.ensName || (address ? (ensName || shorten(address)) : 'Player 1');
     const player2Display = player2WalletInfo.ensName || (secondWallet ?
         (player2EnsName || shorten(secondWallet.address)) : 'Player 2');
-
-    // Check if a position is on or next to water
-    const isNearWater = (position: { x: number, y: number }) => {
-        const { x, y } = position;
-        // Check current position and adjacent positions
-        const positions = [
-            [x, y], [x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]
-        ];
-        return positions.some(([px, py]) =>
-            map[py] && map[py][px] === 4
-        );
-    };
 
     // Redirect if not connected
     useEffect(() => {
@@ -450,6 +431,18 @@ export default function WorldPage() {
         ];
         return positions.some(([px, py]) =>
             map[py] && map[py][px] === 5
+        );
+    };
+
+    // Check if a position is on or next to water
+    const isNearWater = (position: { x: number, y: number }) => {
+        const { x, y } = position;
+        // Check current position and adjacent positions
+        const positions = [
+            [x, y], [x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]
+        ];
+        return positions.some(([px, py]) =>
+            map[py] && map[py][px] === 4
         );
     };
 
@@ -548,8 +541,27 @@ export default function WorldPage() {
             ![1, 3, 4, 5].includes(map[newY][newX])) {
             // Update position
             setPosition({ x: newX, y: newY });
+
+            // Check for water proximity and update bottom mapper
+            const newPosition = { x: newX, y: newY };
+            if (isNearWater(newPosition)) {
+                setShowBottomMapper(true);
+            } else if (playerNum === 1 && !isNearWater(player2Position) ||
+                     playerNum === 2 && !isNearWater(player1Position)) {
+                setShowBottomMapper(false);
+            }
         }
     };
+
+    // Update after any position changes
+    useEffect(() => {
+        // Check both players for water proximity
+        if (isNearWater(player1Position) || isNearWater(player2Position)) {
+            setShowBottomMapper(true);
+        } else {
+            setShowBottomMapper(false);
+        }
+    }, [player1Position, player2Position]);
 
     // Handle keyboard events
     useEffect(() => {
@@ -818,6 +830,19 @@ export default function WorldPage() {
                             )}
                         </div>
                     </div>
+                    {/* Bottom mapper that shows only when near water */}
+                    {showBottomMapper && (
+                        <div className="bottom-mapper text-center text-xs bg-black bg-opacity-70 p-1 rounded">
+                            {/*<p>Player 1: Arrow Keys | Player 2: WASD</p>*/}
+                            <p>The Bridge is not build yet - use 1INCH Fusion+</p>
+                            <button
+                                className="mt-1 bg-gray-700 p-1 rounded"
+                                onClick={() => router.push('/')}
+                            >
+                                Back to Main Menu
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
         </>
