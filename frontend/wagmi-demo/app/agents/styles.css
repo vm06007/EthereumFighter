@@ -40,6 +40,7 @@
     padding: 4px 4px 0px;
     border-radius: 0;
     filter: brightness(1.0) contrast(1.4);
+    margin-bottom: 0px;
 }
 
 .character {
