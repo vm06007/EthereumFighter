@@ -209,7 +209,6 @@ Our core smart contract system consists of several specialized components:
 │   │   ├── EncryptedPosition.sol     # FHE-compatible position tracking
 │   │   ├── PrivateExecution.sol      # Encrypted trade execution logic
 │   │   ├── ConfidentialTrader.sol    # Secure trading strategy execution
-│   │   └── ZKBalanceProof.sol        # Zero-knowledge balance verification
 │   ├── tokens/
 │   │   ├── MetalToken.sol            # ERC-20 implementation of METAL token
 │   │   ├── AgentNFT.sol              # ERC-721 for unique AI agent ownership
@@ -223,6 +222,8 @@ Our core smart contract system consists of several specialized components:
 Deployed contract addresses and verification links:
 
 - **FHE Example (Sepolia)**: [`0x98b65ab65f908Ca25F3D4c793Af55C3386178E5b`]
+
+Full Contract: https://eth-sepolia.blockscout.com/address/0x2c6E6D10f1a56Ad3bba99dBA49567F5911CB95e2?tab=contract
 
 ## 🔮 Future Development
 
