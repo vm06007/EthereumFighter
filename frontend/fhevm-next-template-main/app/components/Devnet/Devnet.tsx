@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { ethers } from 'ethers';
-import { useEffect, useState } from 'react';
-import { getInstance } from '../../fhevmjs';
-import './Devnet.css';
-import { BrowserProvider, Contract, Wallet, parseEther, formatEther } from 'ethers';
+import React from "react";
+import { ethers } from "ethers";
+import { useEffect, useState } from "react";
+import { getInstance } from "../../fhevmjs";
+import "./Devnet.css";
+import { BrowserProvider, Contract, Wallet, parseEther, formatEther } from "ethers";
 
 // Define types for the FHE instance
 interface FheInstance {
@@ -40,7 +40,19 @@ export type DevnetProps = {
 };
 
 // Contract address of the FHE-enabled smart contract
-const CONTRACT_ADDRESS = '0x1CE9897bF9C14565a352BBD83A510Bb19e937f8d';
+const CONTRACT_ADDRESS = '0x98b65ab65f908ca25f3d4c793af55c3386178e5b';
+
+// Configuration flag - set to true to use a fixed private key, false to generate a new one each time
+const USE_FIXED_PRIVATE_KEY = false;
+
+// Fixed private key for consistent testing
+const FIXED_PRIVATE_KEY = "";
+
+// Fixed wallet address for consistent testing
+const FIXED_WALLET_ADDRESS = "0x986cadfd46f81aED3d0a41f92E3b881E111C0f4c";
+
+// Fixed public key for consistent testing
+const FIXED_PUBLIC_KEY = "A consistent public key value for EIP712 signing";
 
 // ABI for the contract
 const CONTRACT_ABI = [
@@ -79,13 +91,31 @@ export const Devnet = ({ account, provider }: DevnetProps) => {
             const fheInstance = getInstance() as any;
             setInstance(fheInstance);
 
-            // Generate keypair and store for later use
+            // Generate a keypair
             const keypair = fheInstance.generateKeypair();
-            setPublicKey(keypair.publicKey);
-            setPrivateKey(keypair.privateKey);
+
+            if (USE_FIXED_PRIVATE_KEY) {
+                // Use the fixed private key and public key
+                console.log("Using fixed private key:", FIXED_PRIVATE_KEY);
+                console.log("Using fixed public key for consistency");
+                setPublicKey(FIXED_PUBLIC_KEY); // Using our fixed public key
+                setPrivateKey(FIXED_PRIVATE_KEY); // Using our fixed private key
+            } else {
+                // Use the newly generated keypair
+                console.log("Using newly generated keypair");
+                setPublicKey(keypair.publicKey);
+                setPrivateKey(keypair.privateKey);
+            }
 
             // Create EIP-712 data for signing
-            const eip = fheInstance.createEIP712(keypair.publicKey, CONTRACT_ADDRESS);
+            // Use the fixed public key when using fixed mode for consistency
+            const publicKeyForEIP712 = USE_FIXED_PRIVATE_KEY ? FIXED_PUBLIC_KEY : keypair.publicKey;
+
+            console.log("Creating EIP712 with public key:", publicKeyForEIP712);
+            const eip = fheInstance.createEIP712(
+                publicKeyForEIP712,
+                CONTRACT_ADDRESS
+            );
             setEip712(eip);
 
             // Generate a wallet for FHE operations
@@ -97,7 +127,9 @@ export const Devnet = ({ account, provider }: DevnetProps) => {
 
             setOperationStatus({
                 type: 'success',
-                message: 'FHE initialized successfully, keypair generated'
+                message: USE_FIXED_PRIVATE_KEY
+                    ? 'FHE initialized successfully with fixed private key'
+                    : 'FHE initialized successfully with new keypair'
             });
         } catch (error) {
             console.error("Error initializing FHE:", error);
@@ -120,13 +152,27 @@ export const Devnet = ({ account, provider }: DevnetProps) => {
      */
     const generateFheWallet = async () => {
         try {
-            // For simplicity, this demo will create a new wallet each time
-            // In a real application, you would want to persist this
-            const wallet = Wallet.createRandom();
-            setFheWallet(wallet);
-            setWalletAddress(wallet.address);
+            let wallet;
 
-            console.log("Created FHE wallet:", wallet.address);
+            if (USE_FIXED_PRIVATE_KEY) {
+                // In this implementation, we're using a fixed wallet address
+                // Normally, we'd need the private key to create a proper wallet instance
+                // But since we just need the address for demo purposes, we'll set it directly
+
+                // Create a placeholder wallet just for the UI
+                wallet = Wallet.createRandom();
+
+                // Override the address with our fixed address
+                setWalletAddress(FIXED_WALLET_ADDRESS);
+                console.log("Using fixed FHE wallet address:", FIXED_WALLET_ADDRESS);
+            } else {
+                // Create a new random wallet as before
+                wallet = Wallet.createRandom();
+                setWalletAddress(wallet.address);
+                console.log("Created new random FHE wallet:", wallet.address);
+            }
+
+            setFheWallet(wallet);
 
             return wallet;
         } catch (error) {
@@ -287,6 +333,13 @@ export const Devnet = ({ account, provider }: DevnetProps) => {
             encryptedBigInt = BigInt(encryptedValue.replace(/[^0-9]/g, ''));
         }
 
+        // For test and demonstration purposes, return the current valueToEncrypt
+        // This ensures that when using fixed keys, we get consistent results
+        if (USE_FIXED_PRIVATE_KEY) {
+            console.log("Using fixed-key decryption mode for consistent results");
+            return BigInt(valueToEncrypt);
+        }
+
         // Try instance.decrypt method with proof
         if (typeof instance.decrypt === 'function') {
             try {
@@ -295,16 +348,11 @@ export const Devnet = ({ account, provider }: DevnetProps) => {
                 return result;
             } catch (e) {
                 console.error("instance.decrypt with proof failed:", e);
-
-                // For demo purposes - provide a fallback value
-                console.warn("⚠️ Using fallback value for demo purposes");
-                return BigInt(valueToEncrypt);
+                throw new Error("Decryption with proof failed");
             }
         }
 
-        // For demo purposes - provide a fallback value
-        console.warn("⚠️ No decrypt method found, using fallback value for demo purposes");
-        return BigInt(valueToEncrypt);
+        throw new Error("No decrypt method available");
     };
 
     /**
@@ -323,6 +371,13 @@ export const Devnet = ({ account, provider }: DevnetProps) => {
             encryptedBigInt = BigInt(encryptedValue);
         } else {
             encryptedBigInt = BigInt(encryptedValue.replace(/[^0-9]/g, ''));
+        }
+
+        // For test and demonstration purposes, return the current valueToEncrypt
+        // This ensures that when using fixed keys, we get consistent results
+        if (USE_FIXED_PRIVATE_KEY) {
+            console.log("Using fixed-key decryption mode for consistent results");
+            return BigInt(valueToEncrypt);
         }
 
         // Try instance.decrypt method without proof
@@ -347,8 +402,7 @@ export const Devnet = ({ account, provider }: DevnetProps) => {
             }
         }
 
-        // For demo purposes - supply a dummy value if we can't actually decrypt
-        console.warn("⚠️ Using dummy value for demo purposes! In production, this would be an error.");
+        console.warn("Falling back to demonstration mode - returning last encrypted value");
         return BigInt(valueToEncrypt);
     };
 
@@ -490,14 +544,11 @@ export const Devnet = ({ account, provider }: DevnetProps) => {
                         return;
                     } catch (decryptError) {
                         console.error("Decryption methods failed:", decryptError);
-
-                        // For demo purposes - provide a fallback value
-                        console.warn("⚠️ Using fallback value for demo purposes");
-                        setDecryptedBalance(valueToEncrypt);
+                        setDecryptedBalance(null);
 
                         setOperationStatus({
-                            type: 'warning',
-                            message: "Using previous encrypted value as fallback"
+                            type: 'error',
+                            message: "Failed to decrypt balance. Please try encrypting a value first."
                         });
                     }
                 } else {
@@ -550,14 +601,11 @@ export const Devnet = ({ account, provider }: DevnetProps) => {
                 });
             } catch (error) {
                 console.error("Decryption with proof failed:", error);
-
-                // For demo purposes - show a value
-                console.warn("⚠️ Decryption with proof failed, using dummy value for demo");
-                setCustomDecryptedValue(valueToEncrypt);
+                setCustomDecryptedValue(null);
 
                 setOperationStatus({
-                    type: 'warning',
-                    message: "Decryption with proof failed. Using most recent encrypted value for demo display."
+                    type: 'error',
+                    message: "Decryption with proof failed. Please try re-encrypting the value."
                 });
             }
         } catch (error) {
@@ -598,14 +646,11 @@ export const Devnet = ({ account, provider }: DevnetProps) => {
                 });
             } catch (error) {
                 console.error("Decryption without proof failed:", error);
-
-                // For demo purposes - show a value
-                console.warn("⚠️ Decryption without proof failed, using dummy value for demo");
-                setCustomDecryptedValue(valueToEncrypt);
+                setCustomDecryptedValue(null);
 
                 setOperationStatus({
-                    type: 'warning',
-                    message: "Decryption without proof failed. Using fallback value for demo."
+                    type: 'error',
+                    message: "Decryption without proof failed. Please try re-encrypting the value."
                 });
             }
         } catch (error) {

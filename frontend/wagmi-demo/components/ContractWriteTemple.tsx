@@ -4,7 +4,8 @@ import { useState } from 'react';
 import Wrapper from 'components/Wrapper';
 import { shorten, type AddressString } from 'lib/utils';
 import { useEffect } from 'react';
-import { useAccount, useWriteContract } from 'wagmi';
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useRouter } from 'next/navigation';
 
 import Button from './Button';
 import MonoLabel from './MonoLabel';
@@ -47,11 +48,21 @@ const ContractWriteTemple = ({
     // We no longer need to track lock duration
 
     // Game contract address
-    const contractAddress: AddressString = "0x66B0FBbEB420B63155d61ec5922293148bb796eC";
+    // joinGameContractAddress
+    const contractAddress: AddressString = "0x98b65ab65f908Ca25F3D4c793Af55C3386178E5b";
 
     // We're not using tokens anymore, so we don't need this logic
 
+    const router = useRouter();
     const { data, error, isError, isPending, writeContract } = useWriteContract();
+    const { isSuccess } = useWaitForTransactionReceipt({
+        hash: data,
+    });
+
+    // Track if we've already called the API to prevent duplicate calls
+    const [apiCalled, setApiCalled] = useState(false);
+    // Track if we've already redirected to prevent multiple redirects
+    const [hasRedirected, setHasRedirected] = useState(false);
 
     // Log errors
     useEffect(() => {
@@ -60,9 +71,57 @@ const ContractWriteTemple = ({
         }
     }, [error]);
 
+    const entryPrice = 5;
+
+    // Call Metal API once transaction is successful and handle redirect
+    useEffect(() => {
+        const handleTransactionSuccess = async () => {
+            if (isSuccess && !apiCalled && playerWallet) {
+                console.log(`Transaction successful - calling Metal API for ${playerWallet}`);
+                // Call Metal API
+                try {
+                    const response = await fetch(
+                        `https://api.metal.build/holder/${playerWallet}/spend`,
+                        {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'x-api-key': '36a07914-87d1-5a8b-9e46-f1dbdb03c553',
+                            },
+                            body: JSON.stringify({
+                                tokenAddress: '0x18c86ea247c36f534491dcd2b7abea4534cc5c23',
+                                amount: entryPrice,
+                            }),
+                        }
+                    );
+
+                    if (response.ok) {
+                        console.log('Metal API call successful');
+                        setApiCalled(true); // Mark API as called to prevent duplicates
+
+                        // Only redirect after successful API call
+                        if (!hasRedirected) {
+                            console.log('API call complete - redirecting to agents page...');
+                            setHasRedirected(true);
+                            router.push('/agents');
+                        }
+                    } else {
+                        console.error('Metal API call failed:', await response.text());
+                    }
+                } catch (error) {
+                    console.error('Error calling Metal API:', error);
+                }
+            }
+        };
+
+        handleTransactionSuccess();
+    }, [isSuccess, apiCalled, playerWallet, hasRedirected, router]);
+
     // Handle joining the game
     const handleJoinGame = () => {
         console.log(`Player ${playerWallet} is joining the game at temple ${templeId}`);
+        setApiCalled(false); // Reset API call state for new transaction
+        setHasRedirected(false); // Reset redirect state for new transaction
 
         writeContract?.({
             abi: ABI,

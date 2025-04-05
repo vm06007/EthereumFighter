@@ -662,6 +662,10 @@ export default function WorldPage() {
                         setModalOpen(false);
                         setBridgeModalOpen(false);
                         break;
+                    case 'q':
+                            setModalOpen(false);
+                            setBridgeModalOpen(false);
+                            break;
                 }
                 return; // Exit early for modal interactions
             }

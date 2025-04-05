@@ -150,13 +150,13 @@ export const characters = [
         background: "Sam Bankman-Fried was the founder of FTX and Alameda Research before their collapse in 2022. Initially celebrated as a crypto wunderkind and philanthropist, his empire imploded amidst allegations of fraud, misuse of customer funds, and inadequate risk management."
     },
     {
-        name: "Senator Lummis",
-        displayName: "Senator Lummis",
-        modelType: "Pro-Crypto Legislator",
+        name: "Add Your Agent",
+        displayName: "Add Your Agent",
+        modelType: "Pro-Crypto Bot",
         llmModel: "Claude Sonnet",
-        features: ["Regulatory Clarity", "Industry Collaboration", "Wyoming Model"],
-        capabilities: ["Legislative drafting", "Bipartisan cooperation", "Balance innovation and protection"],
-        limitations: ["Process constrained by Congress", "US jurisdiction focus", "Competing political priorities"],
-        background: "Senator Cynthia Lummis has emerged as one of the most pro-cryptocurrency voices in Congress. The Wyoming Republican owns Bitcoin herself and has worked on bipartisan legislation to provide regulatory clarity for digital assets while encouraging innovation."
+        features: ["Your Bot", "Your Bot", "Your Bot"],
+        capabilities: ["Your Bot", "Your Bot", "Your Bot"],
+        limitations: ["You Decide", "You Decide", "You Decide"],
+        background: "---"
     }
 ];

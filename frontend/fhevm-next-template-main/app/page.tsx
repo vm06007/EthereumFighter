@@ -29,7 +29,7 @@ function App() {
       <h1>fhevmjs</h1>
       <Connect>{(account, provider) => <Devnet account={account} provider={provider} />}</Connect>
       <p className="read-the-docs">
-        <a href="https://docs.zama.ai/fhevm">See the documentation for more information</a>
+        <a href="https://docs.zama.ai/fhevm">!See the documentation for more information</a>
       </p>
     </>
   );
