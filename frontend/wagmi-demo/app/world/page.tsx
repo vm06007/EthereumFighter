@@ -366,7 +366,7 @@ export default function WorldPage() {
     const [player1Direction, setPlayer1Direction] = useState(0); // 0=down, -128=up, -64=right, -192=left
 
     // State for player 2
-    const [player2Position, setPlayer2Position] = useState({ x: 15, y: 20 });
+    const [player2Position, setPlayer2Position] = useState({ x: 21, y: 30 });
     const [player2Frame, setPlayer2Frame] = useState(0);
     const [player2Direction, setPlayer2Direction] = useState(0);
 
