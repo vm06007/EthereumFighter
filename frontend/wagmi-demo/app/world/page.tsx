@@ -322,6 +322,7 @@ const BridgeModal = ({
 };
 
 export default function WorldPage() {
+
     const router = useRouter();
     const { address, isConnected } = useAccount();
     const { data: ensName } = useEnsName({ address });
@@ -334,7 +335,9 @@ export default function WorldPage() {
     // State for player positions
     const [player1Position, setPlayer1Position] = useState({ x: 10, y: 20 });
     const [player1Frame, setPlayer1Frame] = useState(0);
-    const [player1Direction, setPlayer1Direction] = useState(0); // 0=down, -128=up, -64=right, -192=left
+
+     // 0=down, -128=up, -64=right, -192=left
+    const [player1Direction, setPlayer1Direction] = useState(0);
 
     // State for player 2
     const [player2Position, setPlayer2Position] = useState({ x: 15, y: 20 });
@@ -356,8 +359,15 @@ export default function WorldPage() {
     };
 
     // State to store fixed wallet information for each player
-    const [player1WalletInfo, setPlayer1WalletInfo] = useState({ address: '', ensName: '' });
-    const [player2WalletInfo, setPlayer2WalletInfo] = useState({ address: '', ensName: '' });
+    const [player1WalletInfo, setPlayer1WalletInfo] = useState({
+        address: '',
+        ensName: ''
+    });
+
+    const [player2WalletInfo, setPlayer2WalletInfo] = useState({
+        address: '',
+        ensName: ''
+    });
 
     // References
     const gameContainerRef = useRef<HTMLDivElement>(null);
@@ -431,6 +441,66 @@ export default function WorldPage() {
         );
     };
 
+    // Open modal function
+    const openModal = (position: { x: number, y: number }, playerNum: 1 | 2) => {
+        const { x, y } = position;
+        const positions = [
+            [x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]
+        ];
+
+        // Check for temple
+        const templePos = positions.find(([px, py]) =>
+            map[py] && map[py][px] === 1
+        );
+
+        if (templePos) {
+            const [tx, ty] = templePos;
+
+            // @TODO: temporary set templeId to 1 for testing purposes
+            // In a real scenario, we would calculate the templeId based on the position
+            const calculatedTempleId = 1;
+
+            // Set the active wallet based on which player is interacting
+            if (playerNum === 1) {
+                // Player 1's wallet should already be active
+                console.log("Player 1 interacting with temple");
+            } else if (playerNum === 2 && secondWallet) {
+                // Activate player 2's wallet
+                console.log("Activating player 2's wallet for temple interaction");
+                setActiveWallet(secondWallet);
+            }
+
+            setTempleId(calculatedTempleId);
+            setModalPosition({ x: tx, y: ty });
+            setActivePlayerNumber(playerNum);
+            setModalOpen(true);
+            return true;
+        }
+
+        // Check for bridge
+        const bridgePos = positions.find(([px, py]) =>
+            map[py] && map[py][px] === 5
+        );
+
+        if (bridgePos) {
+            const [bx, by] = bridgePos;
+
+            // Set the active wallet based on which player is interacting
+            if (playerNum === 1) {
+                console.log("Player 1 interacting with bridge");
+            } else if (playerNum === 2 && secondWallet) {
+                console.log("Activating player 2's wallet for bridge interaction");
+                setActiveWallet(secondWallet);
+            }
+
+            setModalPosition({ x: bx, y: by });
+            setActivePlayerNumber(playerNum);
+            setBridgeModalOpen(true);
+            return true;
+        }
+
+        return false;
+    };
 
     return (
         <>
