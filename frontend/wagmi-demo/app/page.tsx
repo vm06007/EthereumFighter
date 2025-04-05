@@ -124,9 +124,11 @@ export default function Home() {
                     connectWallet();
                 }
                 break;
-            case 1: // Spectator Mode
-                // setActionMessage('ENTERING SPECTATOR MODE...');
-                // Add actual action here
+            case 1: // Leader Boards
+                // Navigate to the leaderboards page
+                setTimeout(() => {
+                    router.push('/leaderboards');
+                }, 500);
                 break;
             case 2: // Player vs Player
                 if (isConnected) {

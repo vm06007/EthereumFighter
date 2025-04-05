@@ -1,0 +1,135 @@
+/* Leaderboard styles */
+
+/* Animation for rank changes */
+@keyframes highlightChange {
+  0% {
+    background-color: rgba(220, 38, 38, 0.1);
+  }
+  50% {
+    background-color: rgba(220, 38, 38, 0.3);
+  }
+  100% {
+    background-color: rgba(220, 38, 38, 0.1);
+  }
+}
+
+.rank-changed {
+  animation: highlightChange 2s ease-in-out;
+}
+
+/* Trophy icons for top 3 */
+.rank-1 {
+  color: gold;
+  font-size: 1.2em;
+}
+
+.rank-2 {
+  color: silver;
+  font-size: 1.1em;
+}
+
+.rank-3 {
+  color: #cd7f32; /* bronze */
+  font-size: 1.05em;
+}
+
+/* Retro game styling */
+.retro-container {
+  font-family: 'Press Start 2P', system-ui, -apple-system, sans-serif;
+  background-color: #000;
+  background-image: 
+    linear-gradient(
+      rgba(0, 0, 0, 0.9), 
+      rgba(0, 0, 0, 0.9)
+    ),
+    url('/world-0.jpg');
+  background-position: center;
+  background-size: cover;
+  color: white;
+  text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.5);
+  min-height: 100vh;
+}
+
+.retro-header {
+  text-transform: uppercase;
+  border-bottom: 4px solid #dc2626;
+  padding-bottom: 0.5rem;
+  margin-bottom: 2rem;
+  text-shadow: 3px 3px 0px rgba(0, 0, 0, 0.9);
+}
+
+.retro-table {
+  border-collapse: separate;
+  border-spacing: 0 4px;
+}
+
+.retro-table th {
+  background-color: #111827;
+  color: #dc2626;
+  font-weight: bold;
+  text-transform: uppercase;
+  padding: 1rem;
+  text-align: left;
+}
+
+.retro-table td {
+  padding: 1rem;
+  background-color: rgba(17, 24, 39, 0.7);
+}
+
+.retro-table tr {
+  transition: all 0.2s ease-in-out;
+}
+
+.retro-table tr:hover td {
+  background-color: rgba(31, 41, 55, 0.8);
+}
+
+/* Player highlight */
+.player-row td {
+  background-color: rgba(220, 38, 38, 0.3);
+  border-left: 4px solid #dc2626;
+}
+
+.player-row:hover td {
+  background-color: rgba(220, 38, 38, 0.5);
+}
+
+/* Buttons */
+.retro-button {
+  background-color: #dc2626;
+  color: white;
+  font-weight: bold;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.5);
+}
+
+.retro-button:hover {
+  background-color: #ef4444;
+  transform: translateY(-2px);
+  box-shadow: 5px 5px 0px rgba(0, 0, 0, 0.5);
+}
+
+.retro-button:active {
+  transform: translateY(0);
+  box-shadow: 1px 1px 0px rgba(0, 0, 0, 0.5);
+}
+
+/* Loading spinner */
+.retro-loading {
+  width: 50px;
+  height: 50px;
+  border: 5px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #dc2626;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
