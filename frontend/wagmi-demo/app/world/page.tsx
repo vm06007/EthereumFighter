@@ -415,11 +415,11 @@ export default function WorldPage() {
         (player2EnsName || shorten(secondWallet.address)) : 'Player 2');
 
     // Redirect if not connected
-    /*useEffect(() => {
+    useEffect(() => {
         if (!isConnected) {
             router.push('/');
         }
-    }, [isConnected, router]);*/
+    }, [isConnected, router]);
 
     // Store wallet information when it becomes available
     useEffect(() => {
