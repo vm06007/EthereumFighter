@@ -47,6 +47,7 @@ describe("EthereumFighter", function () {
     // Deploy EthereumFighter contract
     const contract = await deployEthereumFighterFixture(
       await this.mockPriceFeed.getAddress(),
+      await this.mockToken1.getAddress(),
       gameRules as any,
       ORACLE_EXPIRATION_THRESHOLD
     );

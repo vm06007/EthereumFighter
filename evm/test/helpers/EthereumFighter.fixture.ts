@@ -2,6 +2,7 @@ import { ethers } from "hardhat";
 
 export async function deployEthereumFighterFixture(
   priceFeedAddress: string,
+  mockTokenAddress: string,
   gameRules: string,
   oracleExpirationThreshold: number
 ) {
@@ -9,6 +10,7 @@ export async function deployEthereumFighterFixture(
   
   const fighter = await EthereumFighter.deploy(
     priceFeedAddress,
+    mockTokenAddress,
     gameRules,
     oracleExpirationThreshold
   );

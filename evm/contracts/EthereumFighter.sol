@@ -38,7 +38,7 @@ contract EthereumFighter is
         uint256 gameStakingAmount; // Initial stake amount
         uint256 gameDuration;
         uint256 gameStartTime;
-        uint256 rewardAmount;      // Additional reward for the winner
+        uint256 rewardAmount; // Additional reward for the winner
         // Arrays should be the same length
         address[] assets;
         uint256[] assetAmounts;
@@ -74,10 +74,14 @@ contract EthereumFighter is
 
     constructor(
         address _dataFeeds,
+        address _gameToken, // Added gameToken as a constructor parameter
         GameRules memory _gameRules,
         uint256 _oracleExpirationThreshold
     ) {
         if (_dataFeeds == address(0)) {
+            revert ZeroAddress();
+        }
+        if (_gameToken == address(0)) {
             revert ZeroAddress();
         }
         if (_gameRules.gameStakingAmount == 0) {
@@ -100,21 +104,15 @@ contract EthereumFighter is
         }
 
         gameRules = _gameRules;
-        if (_gameRules.assets.length > 0) {
-            gameToken = IERC20(_gameRules.assets[0]);
-        }
-        dataFeed = AggregatorV3Interface(
-            _dataFeeds
-        );
+        gameToken = IERC20(_gameToken); // Initialize gameToken directly from the constructor parameter
+        dataFeed = AggregatorV3Interface(_dataFeeds);
         oracleExpirationThreshold = _oracleExpirationThreshold;
         scoresDecrypted = false;
         player1RewardClaimed = false;
         player2RewardClaimed = false;
     }
 
-    function enrollPlayer()
-        public
-    {
+    function enrollPlayer() public {
         if (block.timestamp >= gameRules.gameStartTime) {
             revert GameStarted();
         }
@@ -173,17 +171,16 @@ contract EthereumFighter is
     function buyEth(
         einput encryptedAmount,
         bytes calldata inputProof
-    )
-        public
-        returns (bool)
-    {
+    ) public returns (bool) {
         if (msg.sender != player1 && msg.sender != player2) {
             revert PlayerNotEnrolled();
         }
         if (block.timestamp < gameRules.gameStartTime) {
             revert GameNotStarted();
         }
-        if (block.timestamp > gameRules.gameStartTime + gameRules.gameDuration) {
+        if (
+            block.timestamp > gameRules.gameStartTime + gameRules.gameDuration
+        ) {
             revert GameNotEnded();
         }
 
@@ -201,7 +198,10 @@ contract EthereumFighter is
         euint256 cost = TFHE.mul(price, amount);
 
         // Check if user has enough balance for the purchase
-        ebool hasSufficientBalance = TFHE.ge(userAsset2Balance[msg.sender], cost);
+        ebool hasSufficientBalance = TFHE.ge(
+            userAsset2Balance[msg.sender],
+            cost
+        );
 
         // Update balances conditionally based on sufficiency check
         userAsset1Balance[msg.sender] = TFHE.add(
@@ -221,17 +221,16 @@ contract EthereumFighter is
     function sellEth(
         einput encryptedAmount,
         bytes calldata inputProof
-    )
-        public
-        returns (bool)
-    {
+    ) public returns (bool) {
         if (msg.sender != player1 && msg.sender != player2) {
             revert PlayerNotEnrolled();
         }
         if (block.timestamp < gameRules.gameStartTime) {
             revert GameNotStarted();
         }
-        if (block.timestamp > gameRules.gameStartTime + gameRules.gameDuration) {
+        if (
+            block.timestamp > gameRules.gameStartTime + gameRules.gameDuration
+        ) {
             revert GameNotEnded();
         }
 
@@ -248,7 +247,10 @@ contract EthereumFighter is
         euint256 revenue = TFHE.mul(price, amount);
 
         // Check if user has enough tokens to sell
-        ebool hasSufficientTokens = TFHE.ge(userAsset1Balance[msg.sender], amount);
+        ebool hasSufficientTokens = TFHE.ge(
+            userAsset1Balance[msg.sender],
+            amount
+        );
 
         // Update balances conditionally based on sufficiency check
         userAsset1Balance[msg.sender] = TFHE.sub(
@@ -267,12 +269,7 @@ contract EthereumFighter is
 
     function fetchPrice() public view returns (int256) {
         // Fetch the latest round data from the Chainlink data feed
-        (
-            ,
-            int256 answer,
-            ,
-            uint256 updatedAt,
-        ) = dataFeed.latestRoundData();
+        (, int256 answer, , uint256 updatedAt, ) = dataFeed.latestRoundData();
 
         // Validate the oracle data
         if (updatedAt + oracleExpirationThreshold < block.timestamp) {
@@ -288,7 +285,9 @@ contract EthereumFighter is
 
     function getWinner() public view returns (address) {
         // Check if the game has ended
-        if (block.timestamp < gameRules.gameStartTime + gameRules.gameDuration) {
+        if (
+            block.timestamp < gameRules.gameStartTime + gameRules.gameDuration
+        ) {
             revert GameNotEnded();
         }
 
@@ -312,7 +311,9 @@ contract EthereumFighter is
         if (msg.sender != player1 && msg.sender != player2) {
             revert PlayerNotEnrolled();
         }
-        if (block.timestamp < gameRules.gameStartTime + gameRules.gameDuration) {
+        if (
+            block.timestamp < gameRules.gameStartTime + gameRules.gameDuration
+        ) {
             revert GameNotEnded();
         }
 
@@ -336,7 +337,9 @@ contract EthereumFighter is
 
     function withdraw() public {
         // Ensure game has ended
-        if (block.timestamp < gameRules.gameStartTime + gameRules.gameDuration) {
+        if (
+            block.timestamp < gameRules.gameStartTime + gameRules.gameDuration
+        ) {
             revert GameNotEnded();
         }
 
@@ -354,7 +357,10 @@ contract EthereumFighter is
         bool isPlayer1 = (msg.sender == player1);
 
         // Check if this player has already claimed their reward
-        if ((isPlayer1 && player1RewardClaimed) || (!isPlayer1 && player2RewardClaimed)) {
+        if (
+            (isPlayer1 && player1RewardClaimed) ||
+            (!isPlayer1 && player2RewardClaimed)
+        ) {
             revert RewardAlreadyClaimed();
         }
 
@@ -387,10 +393,7 @@ contract EthereumFighter is
     function callbackUint256(
         uint256 /*requestID*/,
         uint256[] memory decryptedInput
-    )
-        public
-        onlyGateway
-    {
+    ) public onlyGateway {
         // Ensure we have all required values
         require(decryptedInput.length >= 4, "Insufficient decrypted inputs");
 

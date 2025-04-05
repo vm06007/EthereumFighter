@@ -57,6 +57,7 @@ describe("EtherumFighterPlainMode", function () {
     const EthereumFighterFactory = await ethers.getContractFactory("EtherumFighterPlainMode");
     ethFighter = await EthereumFighterFactory.deploy(
       await mockDataFeed.getAddress(),
+      await mockUSDC.getAddress(),
       gameRules,
       3600 // 1 hour oracle expiration
     ) as EthereumFighter;

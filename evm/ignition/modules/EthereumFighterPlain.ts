@@ -5,7 +5,8 @@ import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 
 const EthereumFighterModule = buildModule("EtherumFighterPlainModeModule", (m) => {
   // Parameters for deployment
-  const dataFeeds = m.getParameter("dataFeeds", "0x0568fD19986748cEfF3301e55c0eb1E729E0Ab7e"); // Celo/USD price feed
+  const dataFeeds = m.getParameter("_dataFeeds", "0x0568fD19986748cEfF3301e55c0eb1E729E0Ab7e"); // Celo/USD price feed
+  const gameToken = m.getParameter("_gameToken", "0x0568fD19986748cEfF3301e55c0eb1E729E0Ab7e"); // Celo/USD price feed
   const oracleExpirationThreshold = m.getParameter("oracleExpirationThreshold", 3*60); // 1 hour
 
 // Update your gameRules object to include matching arrays
@@ -20,7 +21,7 @@ const gameRules = {
 };
 
   // Deploy the EthereumFighter contract
-  const ethereumFighter = m.contract("EtherumFighterPlainMode", [dataFeeds, gameRules, oracleExpirationThreshold]);
+  const ethereumFighter = m.contract("EtherumFighterPlainMode", [dataFeeds,gameToken, gameRules, oracleExpirationThreshold]);
 
   return { ethereumFighter };
 });

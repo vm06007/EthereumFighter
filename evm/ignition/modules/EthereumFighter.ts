@@ -5,7 +5,8 @@ import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 
 const EthereumFighterModule = buildModule("EthereumFighterModule", (m) => {
   // Parameters for deployment
-  const dataFeeds = m.getParameter("dataFeeds", "0xc929ad75B72593967DE83E7F7Cda0493458261D9"); // Replace with actual address
+  const dataFeeds = m.getParameter("_dataFeeds", "0xc929ad75B72593967DE83E7F7Cda0493458261D9"); // Replace with actual address
+  const gameToken = m.getParameter("_gameToken", "0xc929ad75B72593967DE83E7F7Cda0493458261D9"); // Replace with actual address
   const oracleExpirationThreshold = m.getParameter("oracleExpirationThreshold", 3600); // 1 hour
 
   const gameRules = {
@@ -18,7 +19,7 @@ const EthereumFighterModule = buildModule("EthereumFighterModule", (m) => {
   };
 
   // Deploy the EthereumFighter contract
-  const ethereumFighter = m.contract("EthereumFighter", [dataFeeds, gameRules, oracleExpirationThreshold]);
+  const ethereumFighter = m.contract("EthereumFighter", [dataFeeds,gameToken, gameRules, oracleExpirationThreshold]);
 
   return { ethereumFighter };
 });

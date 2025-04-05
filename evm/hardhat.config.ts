@@ -1,7 +1,7 @@
 import type { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "./tasks/etherscanVerify";
-import "./tasks/playGamePlainMode";
+// import "./tasks/playGamePlainMode";
 import "dotenv/config";
 
 const config: HardhatUserConfig = {
@@ -13,7 +13,7 @@ const config: HardhatUserConfig = {
       chainId: 42220,
     },
     sepolia: {
-      url: "https://rpc.sepolia.org", // Sepolia Testnet RPC URL
+      url: process.env.RPC_URL_ETHEREUM, // Sepolia Testnet RPC URL
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       chainId: 11155111,
     },
