@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 // import ContractWriteTemple from '../../components/ContractWriteTemple';
 // import SendTransactionMint from '../../components/SendTransactionMint';
+
 // Generate a 80x80 map filled with 0s
 const generateMap = () => {
 
@@ -217,14 +218,14 @@ const TempleModal = ({
                 minWidth: '350px'
             }}
         >
-            {/*<ContractWriteTemple
+            <ContractWriteTemple
                 playerAddress={playerAddress}
                 playerWallet={playerWallet}
                 amount="0.1"
                 token="ETH"
                 templeId={templeId}
                 onClose={onClose}
-            />*/}
+            />
             {/*<button onClick={onClose}>Leave</button>*/}
         </div>
     );
