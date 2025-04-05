@@ -182,23 +182,58 @@ export default function Home() {
     const updateCommandValue = (commandText: string, step: number): string => {
         // Regular expression to find a number in the command
         const numberRegex = /(\d+(\.\d+)?)/;
-        const match = commandText.match(
-            numberRegex
-        );
+        const match = commandText.match(numberRegex);
 
         if (match) {
-            const currentValue = parseFloat(
-                match[0]
-            );
-
+            const currentValue = parseFloat(match[0]);
+            
             // Prevent negative values
             const newValue = Math.max(0, currentValue + step);
-
-            // Format to keep decimal places if original had them
-            const formattedNewValue = match[0].includes('.') ?
-                newValue.toFixed(match[0].split('.')[1].length) :
-                Math.floor(newValue);
-
+            
+            // Check if we need to maintain specific precision based on token type
+            let formattedNewValue;
+            
+            // Determine the token type to apply appropriate formatting
+            const isEth = commandText.includes('ETH');
+            const isCelo = commandText.includes('CELO');
+            const is1Inch = commandText.includes('1INCH');
+            const isUsd = commandText.includes('USD');
+            
+            // Apply appropriate decimal precision based on token
+            if (match[0].includes('.')) {
+                // Keep existing decimal precision
+                formattedNewValue = newValue.toFixed(match[0].split('.')[1].length);
+            } else if (isEth) {
+                // ETH typically uses 3 decimal places
+                formattedNewValue = Math.round(newValue * 10) / 10;
+            } else if (isCelo || is1Inch) {
+                // CELO and 1INCH typically use whole numbers
+                formattedNewValue = Math.floor(newValue);
+            } else if (isUsd) {
+                // USD uses whole numbers
+                formattedNewValue = Math.floor(newValue);
+            } else {
+                // Default to whole numbers
+                formattedNewValue = Math.floor(newValue);
+            }
+            
+            // Log the update for debugging
+            console.log(`Updating value in "${commandText}" from ${match[0]} to ${formattedNewValue}`);
+            
+            // Add visual feedback effect - find all value-text elements
+            setTimeout(() => {
+                document.querySelectorAll('.value-text').forEach(el => {
+                    if (el.textContent?.includes(String(formattedNewValue))) {
+                        // Add a flash effect
+                        el.classList.add('value-changed');
+                        // Remove the effect after the animation completes
+                        setTimeout(() => {
+                            el.classList.remove('value-changed');
+                        }, 300);
+                    }
+                });
+            }, 50);
+            
             return commandText.replace(numberRegex, String(formattedNewValue));
         }
 
@@ -687,15 +722,43 @@ export default function Home() {
                                                     : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}
                                             `}
                                         >
-                                            <span className="flex-1">{command.text}</span>
+                                            <span className="flex-1 value-text">{command.text}</span>
                                             <div className="flex items-center">
                                                 {command.step && selectedSuggestion === index && (
                                                     <div className="flex items-center mr-3">
                                                         {/*<span className="text-xs mr-2">Adjust:</span>*/}
-                                                        <div className="gamepad-button-wrapper">
+                                                        <div 
+                                                            className="gamepad-button-wrapper"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation(); // Prevent triggering the parent click handler
+                                                                // Apply negative step to decrease value
+                                                                const step = -command.step!;
+                                                                const updatedText = updateCommandValue(command.text, step);
+                                                                const updatedCommands = [...commands];
+                                                                updatedCommands[index] = {
+                                                                    ...command,
+                                                                    text: updatedText
+                                                                };
+                                                                setCommands(updatedCommands);
+                                                            }}
+                                                        >
                                                             <i className="gamepad-button gamepad-button-playstation gamepad-button-playstation--dpad-left gamepad-button-playstation--variant-ps1 gamepad-button--clickable">←</i>
                                                         </div>
-                                                        <div className="gamepad-button-wrapper mx-1">
+                                                        <div 
+                                                            className="gamepad-button-wrapper mx-1"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation(); // Prevent triggering the parent click handler
+                                                                // Apply positive step to increase value
+                                                                const step = command.step!;
+                                                                const updatedText = updateCommandValue(command.text, step);
+                                                                const updatedCommands = [...commands];
+                                                                updatedCommands[index] = {
+                                                                    ...command,
+                                                                    text: updatedText
+                                                                };
+                                                                setCommands(updatedCommands);
+                                                            }}
+                                                        >
                                                             <i className="gamepad-button gamepad-button-playstation gamepad-button-playstation--dpad-right gamepad-button-playstation--variant-ps1 gamepad-button--clickable">→</i>
                                                         </div>
                                                     </div>
