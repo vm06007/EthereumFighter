@@ -138,13 +138,6 @@ const SendTransactionMint = ({
                         setApiResponse(data);
                         setApiCallStatus('success');
                         console.log('Mint notification sent successfully:', data);
-
-                        // Close modal after successful API call (with a small delay for UI feedback)
-                        if (onClose) {
-                            setTimeout(() => {
-                                onClose();
-                            }, 2000);
-                        }
                     } else {
                         setApiCallStatus('error');
                         console.error('Failed to send mint notification:', await response.text());
@@ -206,21 +199,38 @@ const SendTransactionMint = ({
                 Amount: <span className="font-medium">{finalAmount} ETH</span>
             </div>*/}
 
+            {/* Transaction status */}
+            <div>
+                {isPending && <div className="text-sm text-amber-600">Check wallet...</div>}
+                {isSuccess && <div className="text-sm text-green-600">Successful!</div>}
+                {apiCallStatus === 'loading' && <div className="text-sm text-blue-600">Minting...</div>}
+                {apiCallStatus === 'success' && <div className="text-sm text-green-600">Tokens minted!</div>}
+                {apiCallStatus === 'error' && <div className="text-sm text-red-600">Minting API error</div>}
+            </div>
+
             {/* Action button */}
             <div className="flex justify-between items-center">
-                <Button
-                    cta={buttonText}
-                    onClick_={() => prepareTransaction()}
-                    disabled={isPending || (isAttemptingEnsResolution && isEnsLoading) || apiCallStatus === 'loading'}
-                />
-
-                {/* Transaction status */}
-                <div className="ml-3">
-                    {isPending && <div className="text-sm text-amber-600">Check wallet...</div>}
-                    {isSuccess && <div className="text-sm text-green-600">Transaction successful!</div>}
-                    {apiCallStatus === 'loading' && <div className="text-sm text-blue-600">Minting METAL tokens...</div>}
-                    {apiCallStatus === 'success' && <div className="text-sm text-green-600">Tokens minted!</div>}
-                    {apiCallStatus === 'error' && <div className="text-sm text-red-600">Minting API error</div>}
+                <div className="flex-center">
+                    <div style={{left: "30px"}} className="absolute gamepad-button-wrapper">
+                        <i className="gamepad-button gamepad-button-playstation gamepad-button-playstation--cross gamepad-button-playstation--variant-ps1 gamepad-button--clickable">CROSS</i>
+                    </div>
+                    <Button
+                        cta={buttonText}
+                        onClick_={() => prepareTransaction()}
+                        disabled={isPending || (isAttemptingEnsResolution && isEnsLoading) || apiCallStatus === 'loading'}
+                    />
+                    <div style={{left: "180px"}} className="absolute gamepad-button-wrapper">
+                        <i className="gamepad-button gamepad-button-playstation gamepad-button-playstation--circle gamepad-button-playstation--variant-ps1 gamepad-button--clickable">CROSS</i>
+                    </div>
+                    <Button
+                        cta={"Leave"}
+                        onClick_={() => {
+                            if (onClose) {
+                                // onClose();
+                            }
+                        }}
+                        disabled={isPending || (isAttemptingEnsResolution && isEnsLoading) || apiCallStatus === 'loading'}
+                    />
                 </div>
             </div>
 
