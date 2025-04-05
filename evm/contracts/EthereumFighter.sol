@@ -375,7 +375,7 @@ contract EthereumFighter is
     }
 
     function callbackUint256(
-        uint256 requestID,
+        uint256 /*requestID*/,
         uint256[] memory decryptedInput
     ) public onlyGateway {
         // Ensure we have all required values
