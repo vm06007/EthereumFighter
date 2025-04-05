@@ -589,11 +589,11 @@ export default function Home() {
                         minHeight: "500px" // Ensure there's enough height to see the image
                     }}
                     className="flex-1 chat-window bg-cover overflow-y-auto p-4 space-y-4 border-2 border-gray-600 border-gray-600 rounded-xl">
-                    {isPageLoading ? (
+                    {isPageLoading || imageRevealPercent < 100 ? (
                         <div className="flex h-full justify-center items-center">
                             <div className="bg-gray-800 bg-opacity-80 rounded-lg px-6 py-4 text-white">
                                 <div className="flex flex-col items-center gap-2">
-                                    <img width="80" height="80" src="./snail.gif"></img>
+                                    <img width="80" height="80" src="./snail.gif" style={{ transform: "scaleX(-1)" }}></img>
                                     <span className="text-lg font-semibold mt-2">Generating...</span>
                                 </div>
                             </div>
@@ -630,7 +630,7 @@ export default function Home() {
                                             </div>
                                         ) : (
                                             <div className="flex items-center gap-2">
-                                                <img width="50" height="50" src="./snail.gif"></img>
+                                                <img width="50" height="50" src="./snail.gif" style={{ transform: "scaleX(-1)" }}></img>
                                                 <span>Thinking...</span>
                                             </div>
                                         )}
@@ -814,7 +814,7 @@ export default function Home() {
                         minHeight: "500px" // Ensure there's enough height to see the image
                     }}
                     className="flex-1 bg-cover chat-window overflow-y-auto p-4 space-y-4 border-2 border-gray-600 border-gray-600 rounded-xl">
-                    {isPageLoading ? (
+                    {isPageLoading || imageRevealPercent < 100 ? (
                         <div className="flex h-full justify-center items-center">
                             <div className="bg-gray-800 bg-opacity-80 rounded-lg px-6 py-4 text-white">
                                 <div className="flex flex-col items-center gap-2">
