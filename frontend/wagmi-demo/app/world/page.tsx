@@ -134,27 +134,37 @@ const Tile = ({ type, x, y }: { type: number, x: number, y: number }) => {
     );
 };
 
-// Temple modal component
-const TempleModal = ({
+// Bridge modal component
+const BridgeModal = ({
     isOpen,
     onClose,
     position,
     playerAddress,
     playerWallet,
-    templeId = 1
+    onMint  // Added parameter to receive the mint handler
 }: {
     isOpen: boolean,
     onClose: () => void,
     position: { x: number, y: number },
     playerAddress: string,
     playerWallet: string,
-    templeId?: number
+    onMint?: () => void  // Optional to keep backward compatibility
 }) => {
     if (!isOpen) return null;
 
+    // Transaction success handler
+    const handleTransactionSuccess = (txHash: string, amount: string) => {
+        console.log(`Transaction successful! Hash: ${txHash}, Amount: ${amount}`);
+        // If there's a global mint handler, also call it
+        if (onMint) {
+            onMint();
+        }
+    };
+
     return (
         <div
-            className="modal"
+            className="modal bridge-modal"
+            id="bridge-modal"
             style={{
                 position: 'absolute',
                 left: `${position.x * 10 + 20}px`,
@@ -164,18 +174,53 @@ const TempleModal = ({
                 borderRadius: '5px',
                 boxShadow: '0 0 10px rgba(0, 0, 0, 0.5)',
                 zIndex: 20,
-                minWidth: '350px'
+                minWidth: '380px'
             }}
         >
-            {/*<ContractWriteTemple
-                playerAddress={playerAddress}
-                playerWallet={playerWallet}
-                amount="0.1"
-                token="ETH"
-                templeId={templeId}
-                onClose={onClose}
-            />*/}
-            {/*<button onClick={onClose}>Leave</button>*/}
+            <div className="bridge-modal-content">
+                <div className="flex gap-2">
+                <div>
+                    <img width="30" src="https://ethglobal.b-cdn.net/organizations/t2nc8/square-logo/default.png"></img>
+                </div>
+                <h2 className="text-xl font-bold text-gray-800">Forge Tokens</h2>
+                </div>
+                <p className="mb-4 text-gray-600">
+                    Forge game tokens using Metal Service
+                </p>
+                <div style={{paddingBottom: "1px"}} className="bg-blue-50 px-3 pt-3 rounded-md text-sm">
+                    <p className="text-blue-600">
+                        Deposit 0.01 ETH to forge 100 PT tokens
+                    </p>
+                </div>
+
+                {/* SendTransactionMint component instead of buttons */}
+                <div id="bridge-mint-button">
+                    {/*<SendTransactionMint
+                        to="0x641AD78BAca220C5BD28b51Ce8e0F495e85Fe689"
+                        amount="0.01"
+                        // warning="We recommend doing this on a testnet (Sepolia)."
+                        buttonText="Mint"
+                        onSuccess={handleTransactionSuccess}
+                        onClose={onClose}
+                        playerAddress={playerWallet}
+                    />*/}
+                </div>
+
+                <div className="mt-4 text-center">
+                    <button
+                        id="bridge-leave-button"
+                        className="leave-button py-2 px-4 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
+                        onClick={onClose}
+                    >
+                        <div className="flex items-center justify-center gap-2">
+                            <div className="gamepad-button-wrapper">
+                                <i className="gamepad-button gamepad-button-playstation gamepad-button-playstation--circle gamepad-button-playstation--variant-ps1 gamepad-button--clickable">CIRCLE</i>
+                            </div>
+                            Cancel
+                        </div>
+                    </button>
+                </div>
+            </div>
         </div>
     );
 };
@@ -201,7 +246,18 @@ export default function WorldPage() {
     const [player2Direction, setPlayer2Direction] = useState(0);
 
     // Modal state
+    const [modalOpen, setModalOpen] = useState(false);
     const [bridgeModalOpen, setBridgeModalOpen] = useState(false);
+    const [modalPosition, setModalPosition] = useState({ x: 0, y: 0 });
+    const [activePlayerNumber, setActivePlayerNumber] = useState<1 | 2>(1);
+    const [templeId, setTempleId] = useState(1);
+
+    // Bridge modal mint function - centralized handler
+    const handleBridgeMint = () => {
+        console.log("Executing bridge mint from global handler");
+        alert("Minting tokens is currently simulated. This would connect to METAL token contract.");
+        setBridgeModalOpen(false);
+    };
 
     // State to store fixed wallet information for each player
     const [player1WalletInfo, setPlayer1WalletInfo] = useState({ address: '', ensName: '' });
