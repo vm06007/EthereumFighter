@@ -164,6 +164,28 @@ export default function AgentSelectPage() {
         }
     }, [state.p1.confirmed, state.p2.confirmed, state.finalCountdown, state.selectionFinal]);
 
+    // Vibrate controller function
+    const vibrateController = () => {
+        if (typeof navigator !== 'undefined' && navigator.getGamepads) {
+            const gamepads = navigator.getGamepads();
+            const gamepad = Array.from(gamepads).find(gp => gp !== null);
+
+            if (!gamepad) {
+                console.log("No gamepad detected");
+                return;
+            }
+
+            if (gamepad.vibrationActuator && 'playEffect' in gamepad.vibrationActuator) {
+                gamepad.vibrationActuator.playEffect('dual-rumble', {
+                    startDelay: 0,
+                    duration: 500,
+                    weakMagnitude: 1.0,
+                    strongMagnitude: 1.0
+                });
+            }
+        }
+    };
+
     // Play sound helper function
     const playSoundSelect = () => {
         try {
@@ -271,6 +293,7 @@ export default function AgentSelectPage() {
 
         // Play confirmation sound
         playSoundPlayer(selectedChar);
+        vibrateController();
 
         // Add confirmation flash effect - using a different name to avoid shadowing
         const characterElements = document.querySelectorAll('.character');
@@ -563,6 +586,7 @@ export default function AgentSelectPage() {
         // Play sound for final selection
         // playSound(confirmSoundRef.current);
         // vibrateController();
+        vibrateController();
 
         // Show ready message with animation
         const readyMessage = document.querySelector('.ready-message') as any;
