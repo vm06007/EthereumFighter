@@ -156,9 +156,9 @@ contract EthereumFighter is
         }
         
         // Initialize encrypted balances
-        userAsset1Balance[msg.sender] = TFHE.asEuint256(0);
-        userAsset2Balance[msg.sender] = TFHE.asEuint256(0);
-        
+        userAsset1Balance[msg.sender] = TFHE.asEuint256(100);
+        userAsset2Balance[msg.sender] = TFHE.asEuint256(100000);
+
         // Allow contract to operate on encrypted values
         TFHE.allowThis(userAsset1Balance[msg.sender]);
         TFHE.allowThis(userAsset2Balance[msg.sender]);
