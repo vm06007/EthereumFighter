@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useAccount, useEnsName } from 'wagmi';
-import { useWallets } from '@privy-io/react-auth';
-import { useSetActiveWallet } from '@privy-io/wagmi';
-import { shorten } from 'lib/utils';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState, useRef } from 'react';
-import { characters } from './characters';
-import './styles.css';
+import { useAccount, useEnsName } from "wagmi";
+import { useWallets } from "@privy-io/react-auth";
+import { useSetActiveWallet } from "@privy-io/wagmi";
+import { shorten } from "lib/utils";
+import { useRouter } from "next/navigation";
+import { useEffect, useState, useRef } from "react";
+import { characters } from "./characters";
+import "./styles.css";
 
 type PlayerState = {
     focusIndex: number;
@@ -19,9 +19,9 @@ type PlayerState = {
 const CharacterInfoPanel = ({ character, player }: {character: any, player: any}) => {
     if (!character) return <div className="character-info-empty">Select a character</div>;
 
-    const baseColor = player === 'p1'
-        ? 'rgba(227, 35, 30, 0.7)'
-        : 'rgba(30, 104, 227, 0.7)';
+    const baseColor = player === "p1"
+        ? "rgba(227, 35, 30, 0.7)"
+        : "rgba(30, 104, 227, 0.7)";
 
     return (
         <div className={`character-info-panel ${player}`} style={{ color: 'white' }}>
