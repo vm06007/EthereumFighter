@@ -77,10 +77,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     const { address } = useAccount();
     const { data: walletClient } = useWalletClient();
 
-    // Function to convert a Uint8Array to hex string format
-    const toHexString = (bytes: Uint8Array) =>
-
-    /**
+    /* 
      * Handle swap confirmation with direct contract interaction
      * This implementation mimics exactly what Devnet.tsx does
      */
@@ -262,11 +259,11 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     useEffect(() => {
         const handleKeyPress = (e: KeyboardEvent) => {
             if (!swapInfo || !isLatestMessage) return;
-            
+
             // Ignore if any input element is focused (prevents activation while typing)
             const activeElement = document.activeElement;
-            if (activeElement && 
-                (activeElement.tagName === 'INPUT' || 
+            if (activeElement &&
+                (activeElement.tagName === 'INPUT' ||
                  activeElement.tagName === 'TEXTAREA' ||
                  activeElement.getAttribute('contenteditable') === 'true')) {
                 return;
