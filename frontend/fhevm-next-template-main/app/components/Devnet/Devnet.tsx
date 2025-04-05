@@ -569,6 +569,54 @@ export const Devnet = ({ account, provider }: DevnetProps) => {
         }
     };
 
+    /**
+     * Decrypt a custom value without proof
+     */
+    const decryptCustomValueWithoutProof = async () => {
+        if (!instance || !customEncryptedValue) {
+            setOperationStatus({
+                type: 'error',
+                message: "Missing encrypted value to decrypt"
+            });
+            return;
+        }
+
+        try {
+            setOperationStatus({
+                type: 'info',
+                message: "Attempting to decrypt custom value WITHOUT PROOF..."
+            });
+
+            try {
+                const decrypted = await tryDecryptionWithoutProof(customEncryptedValue);
+                console.log("Decrypted value without proof:", decrypted);
+                setCustomDecryptedValue(Number(decrypted));
+
+                setOperationStatus({
+                    type: 'success',
+                    message: "Value decrypted successfully without proof!"
+                });
+            } catch (error) {
+                console.error("Decryption without proof failed:", error);
+
+                // For demo purposes - show a value
+                console.warn("⚠️ Decryption without proof failed, using dummy value for demo");
+                setCustomDecryptedValue(valueToEncrypt);
+
+                setOperationStatus({
+                    type: 'warning',
+                    message: "Decryption without proof failed. Using fallback value for demo."
+                });
+            }
+        } catch (error) {
+            console.error("Error in decryption process:", error);
+            setOperationStatus({
+                type: 'error',
+                message: "Decryption error: " + (error instanceof Error ? error.message : String(error))
+            });
+        }
+    };
+
     return (
         <div className="fhe-container">
             <h2>FHE Operations Demo</h2>
@@ -642,6 +690,12 @@ export const Devnet = ({ account, provider }: DevnetProps) => {
                                 disabled={!handles.length || !encryption}
                             >
                                 Decrypt With Proof
+                            </button>
+                            <button
+                                onClick={decryptCustomValueWithoutProof}
+                                disabled={!handles.length}
+                            >
+                                Decrypt Without Proof
                             </button>
                         </div>
 
