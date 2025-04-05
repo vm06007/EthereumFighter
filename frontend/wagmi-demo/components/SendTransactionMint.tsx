@@ -89,9 +89,21 @@ const SendTransactionMint = ({
 
     const { data: txData, isPending, isSuccess, sendTransaction } = useSendTransaction();
 
+    // Track whether we've already processed this transaction
+    const [processedTxHash, setProcessedTxHash] = useState<string | null>(null);
+
     // Call API endpoint after successful transaction
     useEffect(() => {
+        // Only proceed if we have a successful transaction and a transaction hash
         if (isSuccess && txData && onSuccess) {
+            // Check if we've already processed this transaction
+            if (processedTxHash === txData) {
+                return; // Skip if we've already processed this tx hash
+            }
+
+            // Mark this transaction as processed
+            setProcessedTxHash(txData);
+
             // Call the success callback with transaction hash and amount
             onSuccess(txData, finalAmount);
 
@@ -115,23 +127,7 @@ const SendTransactionMint = ({
                         }
                     )
 
-                    // const distribute = await response.json();
                     console.log(response, 'response');
-                    // console.log(distribute, 'distribute');
-
-                    // replace with MINT integration
-                    /*const response = await fetch('/api/mint-notification', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            txHash: txData,
-                            amount: finalAmount,
-                            playerAddress: playerAddress || 'unknown',
-                            timestamp: new Date().toISOString(),
-                        }),
-                    });*/
 
                     if (response.ok) {
                         const data = await response.json();
@@ -150,7 +146,7 @@ const SendTransactionMint = ({
 
             notifyMintSuccess();
         }
-    }, [isSuccess, txData, onSuccess, onClose, finalAmount, playerAddress]);
+    }, [isSuccess, txData, onSuccess, processedTxHash]);
 
     // Prepare transaction only when we have a resolved address
     const prepareTransaction = () => {
@@ -205,7 +201,7 @@ const SendTransactionMint = ({
                 {isSuccess && <div className="text-sm text-green-600">Successful!</div>}
                 {apiCallStatus === 'loading' && <div className="text-sm text-blue-600">Minting...</div>}
                 {apiCallStatus === 'success' && <div className="text-sm text-green-600">Tokens minted!</div>}
-                {apiCallStatus === 'error' && <div className="text-sm text-red-600">Minting API error</div>}
+                {/*apiCallStatus === 'error' && <div className="text-sm text-red-600">Minting API error</div>*/}
             </div>
 
             {/* Action button */}
@@ -226,7 +222,7 @@ const SendTransactionMint = ({
                         cta={"Leave"}
                         onClick_={() => {
                             if (onClose) {
-                                // onClose();
+                                onClose();
                             }
                         }}
                         disabled={isPending || (isAttemptingEnsResolution && isEnsLoading) || apiCallStatus === 'loading'}
