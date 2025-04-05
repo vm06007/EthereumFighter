@@ -106,7 +106,14 @@ const ContractWriteTemple = ({
             <h2 className="text-xl font-bold mb-4">Temple {templeId} Data</h2>
             {/* 🐍 */}
             <p className="mb-2">Chain: Polygon</p>
-            <p className="mb-2">Player 1: Empty Slot</p>
+            { templeId === 1 && (
+                <p className="mb-2">Player 1: Empty Slot</p>
+            )}
+
+            { templeId === 2 && (
+                <p className="mb-2">Player 1: vitally.eth</p>
+            )}
+
             {/*<p className="mb-2">Player 1: {shorten(playerAddress)}</p>*/}
             <p className="mb-2">Player 2: Empty Slot</p>
             <p className="mb-2">Duration: 24 Hours MAX</p>
