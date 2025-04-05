@@ -134,6 +134,52 @@ const Tile = ({ type, x, y }: { type: number, x: number, y: number }) => {
     );
 };
 
+// Temple modal component
+const TempleModal = ({
+    isOpen,
+    onClose,
+    position,
+    playerAddress,
+    playerWallet,
+    templeId = 1
+}: {
+    isOpen: boolean,
+    onClose: () => void,
+    position: { x: number, y: number },
+    playerAddress: string,
+    playerWallet: string,
+    templeId?: number
+}) => {
+    if (!isOpen) return null;
+
+    return (
+        <div
+            className="modal"
+            style={{
+                position: 'absolute',
+                left: `${position.x * 10 + 20}px`,
+                top: `${position.y * 10}px`,
+                backgroundColor: 'white',
+                padding: '20px',
+                borderRadius: '5px',
+                boxShadow: '0 0 10px rgba(0, 0, 0, 0.5)',
+                zIndex: 20,
+                minWidth: '350px'
+            }}
+        >
+            {/*<ContractWriteTemple
+                playerAddress={playerAddress}
+                playerWallet={playerWallet}
+                amount="0.1"
+                token="ETH"
+                templeId={templeId}
+                onClose={onClose}
+            />*/}
+            {/*<button onClick={onClose}>Leave</button>*/}
+        </div>
+    );
+};
+
 // Bridge modal component
 const BridgeModal = ({
     isOpen,
@@ -368,6 +414,32 @@ export default function WorldPage() {
                             direction={player2Direction}
                         />
                     )}
+
+                    {/* Temple modal */}
+                    <TempleModal
+                        isOpen={modalOpen}
+                        onClose={() => setModalOpen(false)}
+                        position={modalPosition}
+                        playerAddress={activePlayerNumber === 1 ? player1Display : player2Display}
+                        playerWallet={activePlayerNumber === 1 ?
+                            (player1WalletInfo.address || address || '') :
+                            (player2WalletInfo.address || secondWallet?.address || '')
+                        }
+                        templeId={templeId}
+                    />
+
+                    {/* Bridge modal */}
+                    <BridgeModal
+                        isOpen={bridgeModalOpen}
+                        onClose={() => setBridgeModalOpen(false)}
+                        position={modalPosition}
+                        playerAddress={activePlayerNumber === 1 ? player1Display : player2Display}
+                        playerWallet={activePlayerNumber === 1 ?
+                            (player1WalletInfo.address || address || '') :
+                            (player2WalletInfo.address || secondWallet?.address || '')
+                        }
+                        onMint={handleBridgeMint} // Pass the global mint handler
+                    />
                 </div>
 
                 {/* Game UI/HUD */}
@@ -388,7 +460,6 @@ export default function WorldPage() {
                                 <div className="h-full bg-red-600" style={{ width: '100%' }}></div>
                             </div>
                         </div>
-
                         {/* Right side - Connected wallets stacked vertically */}
                         <div className="wallets-container flex flex-col gap-2" style={{ maxWidth: '250px' }}>
                             {/* Display all connected wallets */}
@@ -416,7 +487,6 @@ export default function WorldPage() {
                                     </div>
                                 );
                             })}
-
                             {/* Show placeholder for Player 2 if no second wallet */}
                             {wallets.length === 1 && (
                                 <div className="wallet-card p-2 rounded-lg bg-blue-900 bg-opacity-80">
