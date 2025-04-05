@@ -38,6 +38,8 @@
     justify-content: space-between;
     background: rgba(255, 255, 255, 0.5);
     padding: 4px 4px 0px;
+    border-radius: 0;
+    filter: brightness(1.0) contrast(1.4);
 }
 
 .character {
@@ -49,6 +51,8 @@
     cursor: pointer;
     position: relative;
     text-align: center;
+    transition: all 0.2s ease-in-out;
+    overflow: hidden;
 }
 
 .img-container {
@@ -65,6 +69,8 @@
     width: 100%;
     bottom: 0;
     display: none;
+    margin: 0;
+    padding: 0;
 }
 
 .character__img,
@@ -74,8 +80,11 @@
 }
 
 .character__img {
-    filter: grayscale(0.84);
+    filter: grayscale(0.99);
     height: 120px;
+    width: auto;
+    margin: 0;
+    padding: 0;
 }
 
 /* Focus styles for Player 1 */
@@ -83,6 +92,204 @@
     transform: scale(1.05);
     box-shadow: 0px 0px 10px 2px rgba(227, 35, 30, 0.7);
     z-index: 50;
+    animation: pulse-p1 1s infinite alternate;
+}
+
+@keyframes pulse-p1 {
+    0% { box-shadow: 0px 0px 10px 2px rgba(227, 35, 30, 0.5); }
+    100% { box-shadow: 0px 0px 15px 5px rgba(227, 35, 30, 0.8); }
+}
+
+.character.focus-p1 .character__name {
+    display: block !important;
+    width: 100%;
+    background: rgba(227, 35, 30, 0.7);
+    color: white;
+    opacity: 0.7;
+    margin-top: 0.8em;
+    font-size: 0.7em;
+    text-transform: uppercase;
+    font-weight: 700;
+    padding: 0.3em 0;
+}
+
+.character.focus-p1:after {
+    content: "1P";
+    position: absolute;
+    text-align: center;
+    top: -10px;
+    left: 8px;
+    font-size: 36px;
+    color: rgba(227, 35, 30, 0.7);
+    font-weight: 700;
+    text-shadow: 0px 0px 5px white;
+    z-index: 101;
+}
+
+.character.focus-p1 .character__img {
+    filter: grayscale(0.4) !important;
+    outline: 2px dashed #e3231e;
+}
+
+/* Focus styles for Player 2 */
+.character.focus-p2 {
+    transform: scale(1.05);
+    box-shadow: 0px 0px 10px 2px rgba(30, 104, 227, 0.7);
+    z-index: 50;
+    animation: pulse-p2 1s infinite alternate;
+}
+
+@keyframes pulse-p2 {
+    0% { box-shadow: 0px 0px 10px 2px rgba(30, 104, 227, 0.5); }
+    100% { box-shadow: 0px 0px 15px 5px rgba(30, 104, 227, 0.8); }
+}
+
+.character.focus-p2 .character__name {
+    display: block !important;
+    width: 100%;
+    background: rgba(30, 104, 227, 0.7);
+    color: white;
+    opacity: 0.7;
+    margin-top: 0.8em;
+    font-size: 0.7em;
+    text-transform: uppercase;
+    font-weight: 700;
+    padding: 0.3em 0;
+}
+
+.character.focus-p2:after {
+    content: "2P";
+    position: absolute;
+    text-align: center;
+    top: -10px;
+    right: 8px;
+    font-size: 36px;
+    color: rgba(30, 104, 227, 0.7);
+    font-weight: 700;
+    text-shadow: 0px 0px 5px white;
+    z-index: 101;
+}
+
+.character.focus-p2 .character__img {
+    filter: grayscale(0.4) !important;
+    outline: 2px dashed #1e68e3;
+}
+
+/* Selected styles for Player 1 */
+.character.active-p1 {
+    transform: scale(1.1);
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+    z-index: 100;
+    animation: pop-highlight 0.3s ease-out;
+}
+
+@keyframes pop-highlight {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1.1); }
+}
+
+.character.active-p1 .character__name {
+    display: block !important;
+    width: 100%;
+    background: #e3231e;
+    color: white;
+    opacity: 0.9;
+    margin-top: 0.8em;
+    font-size: 0.7em;
+    text-transform: uppercase;
+    font-weight: 700;
+    padding: 0.3em 0;
+}
+
+.character.active-p1:after {
+    content: "1P";
+    position: absolute;
+    text-align: center;
+    top: -10px;
+    left: 8px;
+    font-size: 36px;
+    color: #e3231e;
+    font-weight: 700;
+    text-shadow: 0px 0px 5px white;
+    z-index: 101;
+}
+
+.character.active-p1 .character__img {
+    filter: grayscale(0) !important;
+    outline: 4px solid #e3231e;
+    animation: flash 300ms linear;
+}
+
+/* Selected styles for Player 2 */
+.character.active-p2 {
+    transform: scale(1.1);
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+    z-index: 100;
+    animation: pop-highlight 0.3s ease-out;
+}
+
+.character.active-p2 .character__name {
+    display: block !important;
+    width: 100%;
+    background: #1e68e3;
+    color: white;
+    opacity: 0.9;
+    margin-top: 0.8em;
+    font-size: 0.7em;
+    text-transform: uppercase;
+    font-weight: 700;
+    padding: 0.3em 0;
+}
+
+.character.active-p2:after {
+    content: "2P";
+    position: absolute;
+    text-align: center;
+    top: -10px;
+    right: 8px;
+    font-size: 36px;
+    color: #1e68e3;
+    font-weight: 700;
+    text-shadow: 0px 0px 5px white;
+    z-index: 101;
+}
+
+.character.active-p2 .character__img {
+    filter: grayscale(0) !important;
+    outline: 4px solid #1e68e3;
+    animation: flash 300ms linear;
+}
+
+/* Flash animation for character selection */
+@keyframes flash {
+    0% { filter: brightness(100%); }
+    20% { filter: brightness(150%); }
+    40% { filter: brightness(100%); }
+    60% { filter: brightness(150%); }
+    80% { filter: brightness(100%); }
+    100% { filter: brightness(150%); }
+}
+
+/* Special confirmation animation */
+@keyframes confirm-flash {
+    0% { box-shadow: 0 0 10px 5px rgba(255, 255, 255, 0.8); }
+    50% { box-shadow: 0 0 30px 10px rgba(255, 255, 255, 0.8); }
+    100% { box-shadow: 0 0 10px 5px rgba(255, 255, 255, 0.8); }
+}
+
+.character.confirmed-p1 {
+    animation: confirm-flash 0.5s ease-in-out;
+}
+
+.character.confirmed-p2 {
+    animation: confirm-flash 0.5s ease-in-out;
+}
+
+/* Hover effects for all characters */
+.character:hover {
+    transform: translateY(-3px);
+    box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.3);
 }
 
 .list-footer .heart {
@@ -94,7 +301,7 @@
 .status-display {
     text-align: center;
     color: white;
-    font-size: 1.5em;
+    font-size: 1rem;
     margin: 1em auto;
     max-width: 860px;
     font-weight: 700;
@@ -118,11 +325,23 @@
     font-size: 12px;
 }
 
+/* Ready message animation */
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.1); opacity: 1; }
+    100% { transform: scale(1); opacity: 0.8; }
+}
+
 .ready-message {
     display: none;
     color: #dac751;
-    font-size: 2em;
+    font-size: 2.5em;
+    font-weight: bold;
     text-shadow: 0 0 10px white;
-    animation: pulse 1s infinite;
     margin: 0.5em auto;
+    animation: pulse 1s infinite;
+}
+
+.ready-message.block {
+    display: block;
 }

@@ -14,6 +14,79 @@ type PlayerState = {
     selecting: boolean;
 };
 
+// Character info component for the detailed display below the roster
+const CharacterInfoPanel = ({ character, player }: {character: any, player: any}) => {
+    if (!character) return <div className="character-info-empty">Select a character</div>;
+
+    const playerColor = player === 'p1' ? 'red' : 'blue';
+    const baseColor = player === 'p1' ? 'rgba(227, 35, 30, 0.7)' : 'rgba(30, 104, 227, 0.7)';
+
+    return (
+        <div className={`character-info-panel ${player}`} style={{ color: 'white' }}>
+            <div className="flex items-start mb-3 gap-3">
+                <div className="w-24 h-28 overflow-hidden rounded-md" style={{ border: `3px solid ${baseColor}` }}>
+                    <img
+                        src={`/${character.name}.avif`}
+                        alt={character.displayName}
+                        className="w-full h-full object-cover"
+                    />
+                </div>
+                <div className="flex-1">
+                    <h3 className="text-l font-bold" style={{ color: baseColor, textShadow: '0 0 3px black' }}>
+                        {character.displayName}
+                    </h3>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                            <span className="font-semibold">Agent Type:</span> {character.modelType}
+                        </div>
+                        <div>
+                            <span className="font-semibold">LLM Model:</span> {character.llmModel}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="mb-2">
+                <h4 className="text-sm font-bold mb-1" style={{ color: baseColor }}>Features</h4>
+                <div className="flex flex-wrap gap-1">
+                    {character.features.map((feature: any, idx: any) => (
+                        <span
+                            key={idx}
+                            className="text-xs px-2 py-1 rounded-md"
+                            style={{ background: baseColor }}
+                        >
+                            {feature}
+                        </span>
+                    ))}
+                </div>
+            </div>
+
+            <div className="mb-2">
+                <h4 className="text-sm font-bold mb-1" style={{ color: baseColor }}>Capabilities</h4>
+                <ul className="list-disc pl-5 text-xs">
+                    {character.capabilities.map((capability: any, idx: any) => (
+                        <li key={idx}>{capability}</li>
+                    ))}
+                </ul>
+            </div>
+
+            <div className="mb-2">
+                <h4 className="text-sm font-bold mb-1" style={{ color: baseColor }}>Limitations</h4>
+                <ul className="list-disc pl-5 text-xs">
+                    {character.limitations.map((limitation: any, idx: any) => (
+                        <li key={idx}>{limitation}</li>
+                    ))}
+                </ul>
+            </div>
+
+            <div>
+                <h4 className="text-sm font-bold mb-1" style={{ color: baseColor }}>Historical Background</h4>
+                <p className="text-xs">{character.background}</p>
+            </div>
+        </div>
+    );
+};
+
 export default function AgentSelectPage() {
     // Router for navigation
     const router = useRouter();
@@ -502,6 +575,49 @@ export default function AgentSelectPage() {
                             </div>
                         ))}
                     </div>
+
+                    {/* Character info panels - Below the character grid */}
+                    <div className="character-info-container mt-6 mx-auto" style={{ maxWidth: '860px' }}>
+                        <div className="flex justify-between gap-4">
+                            {/* Player 1 Character Info */}
+                            <div className="w-1/2 p-4 rounded-md" style={{
+                                background: 'rgba(20, 20, 20, 0.7)',
+                                border: '2px solid rgba(227, 35, 30, 0.7)',
+                                minHeight: '290px',
+                                maxHeight: '290px',
+                                overflow: 'auto'
+                            }}>
+                                <CharacterInfoPanel
+                                    character={characters[state.p1.focusIndex]}
+                                    player="p1"
+                                />
+                            </div>
+
+                            {/* Player 2 Character Info */}
+                            <div className="w-1/2 p-4 rounded-md" style={{
+                                background: 'rgba(20, 20, 20, 0.7)',
+                                border: '2px solid rgba(30, 104, 227, 0.7)',
+                                minHeight: '290px',
+                                maxHeight: '290px',
+                                overflow: 'auto'
+                            }}>
+                                {hasTwoWallets ? (
+                                    <CharacterInfoPanel
+                                        character={characters[state.p2.focusIndex]}
+                                        player="p2"
+                                    />
+                                ) : (
+                                    <div className="h-full flex items-center justify-center text-gray-400">
+                                        <div className="text-center">
+                                            <p className="mb-2 text-lg">Connect a second wallet</p>
+                                            <p className="text-sm">to enable Player 2 selection</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Action buttons - Only appear after the 2-second window */}
                     <div className="flex justify-center mt-4">
                         {/* Reset button only - resets the selection */}
