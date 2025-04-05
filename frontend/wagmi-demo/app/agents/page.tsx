@@ -1134,6 +1134,21 @@ export default function AgentSelectPage() {
                                     </div>
                                     <p className="text-white">{player1Display}</p>
                                 </div>
+
+                                {/* Character Info for P1 */}
+                                <div className="p-3 rounded-md bg-gray-900 text-white text-sm">
+                                    {(() => {
+                                        const char = characters.find(c => c.name === selectedCharacters.p1);
+                                        return char ? (
+                                            <>
+                                                <div className="font-bold text-red-400 mb-1">{char.displayName}</div>
+                                                <div className="mb-2 text-xs">
+                                                    <span className="text-gray-400">Model:</span> {char.modelType} ({char.llmModel})
+                                                </div>
+                                            </>
+                                        ) : null;
+                                    })()}
+                                </div>
                             </div>
 
                             <div className="flex-center text-white text-4xl font-bold">VS</div>

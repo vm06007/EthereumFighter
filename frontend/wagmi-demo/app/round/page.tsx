@@ -5,8 +5,28 @@ import type { ChatMessage as ChatMessageType } from "./lib/types/api";
 import ChatMessage from "./ChatMessage";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { shorten } from 'lib/utils';
+import { useAccount, useEnsName } from 'wagmi';
+import { useSearchParams } from 'next/navigation';
 
 export default function Home() {
+    // Get URL parameters
+    const searchParams = useSearchParams();
+    const player1Param = searchParams.get('p1') || 'Vitalik Buterin';
+    const player2Param = searchParams.get('p2') || 'Vitalik Buterin';
+
+    // Get connected account information
+    const { address, isConnected } = useAccount();
+    // Try to get ENS name for the connected address
+    const { data: ensName } = useEnsName({ address });
+
+    // For second player (in a real app, this would come from another connection)
+    const [player2Address, setPlayer2Address] = useState<string | null>(null);
+
+    // State for player character images
+    const [player1Image, setPlayer1Image] = useState<string>('./vitalik.jpg');
+    const [player2Image, setPlayer2Image] = useState<string>('./vitalik2.jpg');
+
     const [messages, setMessages] = useState<ChatMessageType[]>([]);
     const [messages2, setMessages2] = useState<ChatMessageType[]>([]);
 
@@ -18,6 +38,8 @@ export default function Home() {
 
     // State for initial page loading animation
     const [isPageLoading, setIsPageLoading] = useState(true);
+    // State for image reveal animation (0-100%)
+    const [imageRevealPercent, setImageRevealPercent] = useState(0);
 
     // New states for streaming responses
     const [streamedResponse, setStreamedResponse] = useState("");
@@ -53,15 +75,87 @@ export default function Home() {
     const inputRef = useRef<HTMLInputElement>(null);
     const chatWindowRef = useRef<HTMLDivElement>(null);
 
+    // Effect to set player images based on URL parameters
+    useEffect(() => {
+        // Set debug mode
+        const DEBUG = true;
+
+        // Select the proper Vitalik image for player position (P1 or P2)
+        const getVitalikImage = (isPlayer1: boolean): string => {
+            return isPlayer1 ? '/f/vitalik.jpg' : '/f/vitalik2.jpg';
+        };
+
+        // Helper function to create image path for a character
+        const getCharacterImagePath = (character: string, isPlayer1: boolean): string => {
+            if (DEBUG) console.log(`Getting image path for character: "${character}"`);
+
+            // For Vitalik Buterin, use the default images based on player position
+            if (character === 'Vitalik Buterin') {
+                const vitalikImg = getVitalikImage(isPlayer1);
+                if (DEBUG) console.log(`Using Vitalik image: ${vitalikImg}`);
+                return vitalikImg;
+            }
+
+            // Create image path with /f/ prefix, preserving original name with spaces
+            const imagePath = `/f/${character}.png`;  // Using /f/ folder for round page images
+
+            if (DEBUG) {
+                console.log(`Generated character image path: ${imagePath}`);
+
+                // Test if the image exists by creating an Image object (client-side only)
+                if (typeof window !== 'undefined') {
+                    const img = new Image();
+                    img.onload = () => console.log(`✅ Image loaded successfully: ${imagePath}`);
+                    img.onerror = () => console.error(`❌ Image failed to load: ${imagePath}`);
+                    img.src = imagePath;
+                }
+            }
+
+            return imagePath;
+        };
+
+        // Set images based on the character names from URL and their player position
+        const p1Path = getCharacterImagePath(player1Param, true);
+        const p2Path = getCharacterImagePath(player2Param, false);
+
+        setPlayer1Image(p1Path);  // true = is Player 1
+        setPlayer2Image(p2Path);  // false = is Player 2
+
+        console.log(`*** PATHS SET ***`);
+        console.log(`P1 Image Path: ${p1Path}`);
+        console.log(`P2 Image Path: ${p2Path}`);
+    }, [player1Param, player2Param]);
+
     // Effect for simulating loading animation when page first loads
     useEffect(() => {
-        // Simulate loading delay of 2.5 seconds
-        const timer = setTimeout(() => {
-            setIsPageLoading(false);
+        // Generate a random address for player 2 right away
+        const randomAddress = `0x${Array.from({length: 40}, () =>
+            Math.floor(Math.random() * 16).toString(16)).join('')}`;
+        setPlayer2Address(randomAddress);
+
+        // Simulate initial loading delay (5 seconds)
+        const loadingTimer = setTimeout(() => {
+            // Don't hide the loading overlay yet
+            // We'll hide it after the image is fully revealed
+            
+            // Start the image reveal animation
+            let percent = 0;
+            const revealInterval = setInterval(() => {
+                percent += 1;
+                setImageRevealPercent(percent);
+                
+                // When animation reaches 100%, clear the interval and hide loading screen
+                if (percent >= 100) {
+                    clearInterval(revealInterval);
+                    // Only set isPageLoading to false after the reveal is complete
+                    setIsPageLoading(false);
+                }
+            }, 25); // 25ms per percent = ~2.5 seconds for full reveal
+            
         }, 5000);
 
-        // Clean up timeout
-        return () => clearTimeout(timer);
+        // Clean up timeout on unmount
+        return () => clearTimeout(loadingTimer);
     }, []);
 
     // Effect to update chat window dimensions when showing overlay
@@ -469,12 +563,16 @@ export default function Home() {
                         style={{justifyContent: "space-between"}}
                         className={`max-w-2xl mx-auto flex items-center ${(blurModeActive && activePlayer === 'p1') ? '' : ''}`}
                     >
-                        <div className="text-white">P1: (vitally.eth) 100 ETH 100,000 USD</div>
+                        <div className="text-white">
+                            P1: {isConnected ? (
+                                <span>{ensName || (address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "Not connected")}</span>
+                            ) : "Connect your wallet"} 100 ETH 100,000 USD
+                        </div>
                         <img className="eye-on" onClick={() => {handleBlind()}} width="40" src="./eye-on.png" />
                         <img className="eye-off hidden" onClick={() => {handleBlind()}} width="40" src="./eye-off.png" />
                     </div>
                     <div className="mb-3 text-white">
-                        Agent: (0x123...321) claude/llamahaiku3.6
+                        Agent: {isConnected && address ? shorten(address) : "0x123...321"} claude/llamahaiku3.6
                     </div>
                 </div>
 
@@ -482,10 +580,16 @@ export default function Home() {
                 <div
                     ref={chatWindowRef}
                     style={{
-                        background: isPageLoading ? "none" : "url(./vitalik.jpg)",
+                        background: `url("${player1Image}")`,
                         backgroundSize: "cover",
+                        backgroundPosition: "center top",
                         position: "relative",
-                        backgroundColor: isPageLoading ? "rgba(0,0,0,0.5)" : "transparent"
+                        backgroundColor: "rgba(0,0,0,0.25)",
+                        backgroundRepeat: "no-repeat",
+                        // Add reveal animation clipping
+                        clipPath: `inset(0 0 ${100 - imageRevealPercent}% 0)`,
+                        transition: "clip-path 0.3s ease-out",
+                        minHeight: "500px" // Ensure there's enough height to see the image
                     }}
                     className="flex-1 chat-window bg-cover overflow-y-auto p-4 space-y-4 border-2 border-gray-600 border-gray-600 rounded-xl">
                     {isPageLoading ? (
@@ -692,17 +796,25 @@ export default function Home() {
                     >
                         <img className="eye-on-2"  onClick={() => {handleBlind2()}} width="40" src="./eye-on.png" />
                         <img className="eye-off-2 hidden" onClick={() => {handleBlind2()}} width="40" src="./eye-off.png" />
-                        <div style={{textAlign: "right"}} className="text-white">P2: (0x123...321) 100 ETH 100,000 USD</div>
+                        <div style={{textAlign: "right"}} className="text-white">
+                            P2: {player2Address ? `${player2Address.slice(0, 6)}...${player2Address.slice(-4)}` : "0x123...321"} 100 ETH 100,000 USD
+                        </div>
                     </div>
                     <div className="mb-3 text-white" style={{textAlign: "right"}}>
-                        Agent: (0x123...321) claude/llamahaiku3.6
+                        Agent: { shorten(player2Address || "") || "0x123...321"} claude/llamahaiku3.6
                     </div>
                 </div>
                 <div
                     style={{
-                        background: isPageLoading ? "none" : "url(./vitalik2.jpg)",
-                        backgroundColor: isPageLoading ? "rgba(0,0,0,0.5)" : "transparent",
-                        backgroundSize: "cover"
+                        background: `url("${player2Image}")`,
+                        backgroundColor: "rgba(0,0,0,0.25)",
+                        backgroundSize: "cover",
+                        backgroundPosition: "center top",
+                        backgroundRepeat: "no-repeat",
+                        // Add reveal animation clipping
+                        clipPath: `inset(0 0 ${100 - imageRevealPercent}% 0)`,
+                        transition: "clip-path 0.3s ease-out",
+                        minHeight: "500px" // Ensure there's enough height to see the image
                     }}
                     className="flex-1 bg-cover chat-window overflow-y-auto p-4 space-y-4 border-2 border-gray-600 border-gray-600 rounded-xl">
                     {isPageLoading ? (
