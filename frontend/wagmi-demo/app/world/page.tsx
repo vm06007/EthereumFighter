@@ -238,7 +238,7 @@ const BridgeModal = ({
         console.log(`Transaction successful! Hash: ${txHash}, Amount: ${amount}`);
         // If there's a global mint handler, also call it
         if (onMint) {
-            onMint();
+            // onMint();
         }
     };
 
@@ -336,7 +336,7 @@ export default function WorldPage() {
     // Bridge modal mint function - centralized handler
     const handleBridgeMint = () => {
         console.log("Executing bridge mint from global handler");
-        alert("Minting tokens is currently simulated. This would connect to METAL token contract.");
+        // alert("Minting tokens is currently simulated. This would connect to METAL token contract.");
         setBridgeModalOpen(false);
     };
 
