@@ -423,12 +423,6 @@ export default function AgentSelectPage() {
                     {<h1 className="font-bold mb-2 text-white" style={{textAlign: "center"}}>
                         AI AGENT SELECT
                     </h1>}
-                    {/*<div className="controls-help text-center text-xs bg-black bg-opacity-50 p-2 rounded-md mb-4 max-w-[860px] mx-auto">
-                        <p>P1 ({player1Display}): WASD to move, SPACE to select, BACKSPACE to cancel</p>
-                        {hasTwoWallets && (
-                            <p>P2 ({player2Display}): Arrow keys to move, ENTER to select, ESC to cancel</p>
-                        )}
-                    </div>*/}
                     <div className="status-display text-left text-base font-bold my-4 max-w-[860px] mx-auto text-shadow-md">
                         <span style={{width: "46%", textAlign: "left"}} className="player-status p1 inline-block py-1 px-3 mx-1 rounded bg-red-700 bg-opacity-70 text-xs">
                             {`P1 ${state.p1.confirmed
@@ -437,7 +431,6 @@ export default function AgentSelectPage() {
                                     ? characters[state.p1.focusIndex].displayName
                                     : 'Selecting'}`}
                         </span>
-
                         {hasTwoWallets && (
                             <span style={{width: "46%", textAlign: "right"}} className="player-status p2 inline-block py-1 px-3 mx-1 rounded bg-blue-700 bg-opacity-70 text-xs">
                                 {`${state.p2.confirmed
@@ -508,6 +501,19 @@ export default function AgentSelectPage() {
                                 </div>
                             </div>
                         ))}
+                    </div>
+                    {/* Action buttons - Only appear after the 2-second window */}
+                    <div className="flex justify-center mt-4">
+                        {/* Reset button only - resets the selection */}
+                        <button
+                            className="reset-button hidden bg-[#dac751] text-[#0d0d3a] border-none py-3 px-8 font-bold rounded-md cursor-pointer text-xl hover:bg-yellow-300 transition-colors shadow-lg"
+                            onClick={resetGame}
+                            style={{
+                                display: 'none', /* Initially hidden, shown by JavaScript after finalization */
+                            }}
+                        >
+                            RESET
+                        </button>
                     </div>
                 </div>
             </div>
