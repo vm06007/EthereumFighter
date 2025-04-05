@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import dynamic from 'next/dynamic';
 import type { ChatMessage as ChatMessageType } from "./lib/types/api";
 import ChatMessage from "./ChatMessage";
 import ReactMarkdown from "react-markdown";
@@ -9,7 +10,7 @@ import { shorten } from 'lib/utils';
 import { useAccount, useEnsName } from 'wagmi';
 import { useSearchParams } from 'next/navigation';
 
-export default function Home() {
+function RoundPageContent() {
     // Get URL parameters
     const searchParams = useSearchParams();
     const player1Param = searchParams.get('p1') || 'Vitalik Buterin';
@@ -981,4 +982,13 @@ export default function Home() {
             </main>
         </div>
     );
+}
+
+// Dynamically import the page with no SSR to prevent Privy errors during build/prerender
+const RoundPage = dynamic(() => Promise.resolve(RoundPageContent), {
+  ssr: false,
+});
+
+export default function Page() {
+  return <RoundPage />;
 }

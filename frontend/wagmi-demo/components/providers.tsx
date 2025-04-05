@@ -31,12 +31,19 @@ const privyConfig: PrivyClientConfig = {
 };
 
 export default function Providers({children}: {children: React.ReactNode}) {
+  // If we're not in the browser (during SSR/SSG), render children without Privy
+  // This prevents the "invalid Privy app ID" error during prerendering
+  if (typeof window === 'undefined') {
+    return <>{children}</>;
+  }
+
+  // Only use Privy provider in client-side rendering
   return (
     <PrivyProvider
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
-      apiUrl={process.env.NEXT_PUBLIC_PRIVY_AUTH_URL as string}
-      appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID as string}
+      apiUrl={process.env.NEXT_PUBLIC_PRIVY_AUTH_URL as string || 'https://auth.privy.io'}
+      appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID as string || 'cloned-demo-app'} 
       config={privyConfig}
     >
       <QueryClientProvider client={queryClient}>
