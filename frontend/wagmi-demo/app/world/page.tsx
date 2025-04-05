@@ -382,6 +382,29 @@ export default function WorldPage() {
         }
     }, [secondWallet, player2EnsName, player2WalletInfo.address]);
 
+    // Check if a position is next to a temple
+    const isNextToTemple = (position: { x: number, y: number }) => {
+        const { x, y } = position;
+        const positions = [
+            [x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]
+        ];
+        return positions.some(([px, py]) =>
+            map[py] && map[py][px] === 1
+        );
+    };
+
+    // Check if a position is next to a bridge
+    const isNextToBridge = (position: { x: number, y: number }) => {
+        const { x, y } = position;
+        const positions = [
+            [x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]
+        ];
+        return positions.some(([px, py]) =>
+            map[py] && map[py][px] === 5
+        );
+    };
+
+
     return (
         <>
             <div style={{
@@ -482,6 +505,7 @@ export default function WorldPage() {
                                 <div className="h-full bg-red-600" style={{ width: '100%' }}></div>
                             </div>
                         </div>
+
                         {/* Right side - Connected wallets stacked vertically */}
                         <div className="wallets-container flex flex-col gap-2" style={{ maxWidth: '250px' }}>
                             {/* Display all connected wallets */}
@@ -509,6 +533,7 @@ export default function WorldPage() {
                                     </div>
                                 );
                             })}
+
                             {/* Show placeholder for Player 2 if no second wallet */}
                             {wallets.length === 1 && (
                                 <div className="wallet-card p-2 rounded-lg bg-blue-900 bg-opacity-80">
