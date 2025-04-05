@@ -43,27 +43,15 @@ const generateMap = () => {
         [44, 14],
         [44, 15],
         [44, 16],
-        [22, 40],
-        [21, 40],
-        [20, 40],
-        [19, 40],
-        [18, 40],
-        [23, 39],
-        [22, 39],
-        [21, 39],
-        [20, 39],
-        [19, 39],
-        [18, 39],
-        [23, 38],
-        [22, 38],
-        [21, 38],
-        [20, 38],
-        [19, 38],
-        [18, 38],
-        [17, 38],
-        [23, 37],
         [23, 36],
+        [23, 37],
+        [23, 38],
         [23, 35],
+        [16, 53],
+        [16, 52],
+        [16, 54],
+        [16, 66],
+        [16, 67],
     ].forEach(([y, x]) => {
         map[y][x] = 1; // Temple
     });
@@ -144,6 +132,7 @@ const Tile = ({ type, x, y }: { type: number, x: number, y: number }) => {
     } else if (type === 4) {
         className += 'river';
         // content = '🌊';
+        content = '';
     } else if (type === 5) {
         className += 'bridge';
         content = '🌉';
@@ -169,8 +158,9 @@ const Tile = ({ type, x, y }: { type: number, x: number, y: number }) => {
                 // visibility: 'hidden',
                 fontSize: '8px',
                 backgroundColor: type === 1 ? 'rgba(200, 0, 0, 0.7)' :
-                    type === 2 ? 'rgba(200, 200, 200, 0.5)' :
-                        type === 3 ? 'rgba(200, 200, 200, 0.5)' :
+                    type === 2 ? 'rgba(200, 200, 200, 1)' :
+                        type === 3 ? 'rgba(200, 200, 200, 1)' :
+                            type === 4 ? 'rgba(30, 144, 255, 0.0)' :
                                 type === 5 ? 'rgba(139, 69, 19, 0.7)' : 'transparent'
             }}
         >
