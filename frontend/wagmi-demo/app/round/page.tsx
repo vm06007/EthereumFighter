@@ -77,34 +77,53 @@ export default function Home() {
 
     // Effect to set player images based on URL parameters
     useEffect(() => {
+        // Set debug mode
+        const DEBUG = true;
+        
         // Select the proper Vitalik image for player position (P1 or P2)
         const getVitalikImage = (isPlayer1: boolean): string => {
-            return isPlayer1 ? './vitalik.jpg' : './vitalik2.jpg';
+            return isPlayer1 ? '/vitalik.jpg' : '/vitalik2.jpg';
         };
         
         // Helper function to create image path for a character
         const getCharacterImagePath = (character: string, isPlayer1: boolean): string => {
+            if (DEBUG) console.log(`Getting image path for character: "${character}"`);
+            
             // For Vitalik Buterin, use the default images based on player position
             if (character === 'Vitalik Buterin') {
-                return getVitalikImage(isPlayer1);
+                const vitalikImg = getVitalikImage(isPlayer1);
+                if (DEBUG) console.log(`Using Vitalik image: ${vitalikImg}`);
+                return vitalikImg;
             }
             
-            // Remove any spaces and special characters, convert to proper filename
-            const formattedName = character
-                .replace(/[^\w\s]/gi, '')  // Remove special chars
-                .replace(/\s+/g, ' ')      // Normalize spaces
-                .trim();
+            // Create image path, preserving original name with spaces
+            const imagePath = `/${character}.avif`;  // IMPORTANT: Removed the dot/period
             
-            // Return the path with .avif extension
-            return `./${formattedName}.avif`;
+            if (DEBUG) {
+                console.log(`Generated character image path: ${imagePath}`);
+                
+                // Test if the image exists by creating an Image object (client-side only)
+                if (typeof window !== 'undefined') {
+                    const img = new Image();
+                    img.onload = () => console.log(`✅ Image loaded successfully: ${imagePath}`);
+                    img.onerror = () => console.error(`❌ Image failed to load: ${imagePath}`);
+                    img.src = imagePath;
+                }
+            }
+            
+            return imagePath;
         };
         
         // Set images based on the character names from URL and their player position
-        setPlayer1Image(getCharacterImagePath(player1Param, true));  // true = is Player 1
-        setPlayer2Image(getCharacterImagePath(player2Param, false)); // false = is Player 2
+        const p1Path = getCharacterImagePath(player1Param, true);
+        const p2Path = getCharacterImagePath(player2Param, false);
         
-        console.log(`Loading characters: P1=${player1Param}, P2=${player2Param}`);
-        console.log(`Character images: P1=${getCharacterImagePath(player1Param, true)}, P2=${getCharacterImagePath(player2Param, false)}`);
+        setPlayer1Image(p1Path);  // true = is Player 1
+        setPlayer2Image(p2Path);  // false = is Player 2
+        
+        console.log(`*** PATHS SET ***`);
+        console.log(`P1 Image Path: ${p1Path}`);
+        console.log(`P2 Image Path: ${p2Path}`);
     }, [player1Param, player2Param]);
     
     // Effect for simulating loading animation when page first loads
@@ -558,13 +577,16 @@ export default function Home() {
                 <div
                     ref={chatWindowRef}
                     style={{
-                        background: isPageLoading ? "none" : `url(${player1Image})`,
+                        background: isPageLoading ? "none" : `url("${player1Image}")`,
                         backgroundSize: "cover",
+                        backgroundPosition: "center top",
                         position: "relative",
-                        backgroundColor: isPageLoading ? "rgba(0,0,0,0.5)" : "transparent",
+                        backgroundColor: isPageLoading ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0.25)",
+                        backgroundRepeat: "no-repeat",
                         // Add reveal animation clipping when not loading
                         clipPath: !isPageLoading ? `inset(0 0 ${100 - imageRevealPercent}% 0)` : "none",
-                        transition: "clip-path 0.3s ease-out"
+                        transition: "clip-path 0.3s ease-out",
+                        minHeight: "500px" // Ensure there's enough height to see the image
                     }}
                     className="flex-1 chat-window bg-cover overflow-y-auto p-4 space-y-4 border-2 border-gray-600 border-gray-600 rounded-xl">
                     {isPageLoading ? (
@@ -781,12 +803,15 @@ export default function Home() {
                 </div>
                 <div
                     style={{
-                        background: isPageLoading ? "none" : `url(${player2Image})`,
-                        backgroundColor: isPageLoading ? "rgba(0,0,0,0.5)" : "transparent",
+                        background: isPageLoading ? "none" : `url("${player2Image}")`,
+                        backgroundColor: isPageLoading ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0.25)",
                         backgroundSize: "cover",
+                        backgroundPosition: "center top",
+                        backgroundRepeat: "no-repeat",
                         // Add reveal animation clipping when not loading
                         clipPath: !isPageLoading ? `inset(0 0 ${100 - imageRevealPercent}% 0)` : "none",
-                        transition: "clip-path 0.3s ease-out"
+                        transition: "clip-path 0.3s ease-out",
+                        minHeight: "500px" // Ensure there's enough height to see the image
                     }}
                     className="flex-1 bg-cover chat-window overflow-y-auto p-4 space-y-4 border-2 border-gray-600 border-gray-600 rounded-xl">
                     {isPageLoading ? (
