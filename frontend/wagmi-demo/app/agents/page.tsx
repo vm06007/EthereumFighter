@@ -158,7 +158,7 @@ export default function AgentSelectPage() {
             setTimeout(() => {
                 if (state.p1.confirmed && state.p2.confirmed && !state.finalCountdown && !state.selectionFinal) {
                     console.log("STARTING COUNTDOWN AFTER DELAY");
-                    // checkBothConfirmed();
+                    checkBothConfirmed();
                 }
             }, 800); // 800ms delay before starting the countdown
         }
@@ -414,24 +414,151 @@ export default function AgentSelectPage() {
         // playSound(selectSoundRef.current);
     };
 
+    // Check if both players confirmed their selection
+    const checkBothConfirmed = () => {
+        // Debug logging
+        console.log(`Check Both Confirmed: p1=${state.p1.confirmed}, p2=${state.p2.confirmed}, finalCountdown=${!!state.finalCountdown}, selectionFinal=${state.selectionFinal}`);
+
+        // If both players confirmed and countdown not started yet, begin the 2-second countdown
+        if (state.p1.confirmed && state.p2.confirmed) {
+            if (!state.finalCountdown) {
+                console.log("STARTING 2-SECOND COUNTDOWN!");
+
+                const p1Char = characters[state.p1.focusIndex];
+                const p2Char = characters[state.p2.focusIndex];
+
+
+                // Display a prominent countdown in the middle of the screen
+                const countdownContainer = document.createElement('div');
+                countdownContainer.id = 'countdown-container';
+                countdownContainer.className = 'fixed inset-0 flex flex-col items-center justify-center z-50';
+                countdownContainer.style.pointerEvents = 'none'; // Allow clicks through
+                countdownContainer.style.backdropFilter = 'brightness(0.7)'; // Dim the background
+
+                const countdownElement = document.createElement('div');
+                countdownElement.className = 'text-9xl font-extrabold text-yellow-300 bg-black bg-opacity-70 px-16 py-10 rounded-lg';
+                countdownElement.style.textShadow = '0 0 15px gold, 0 0 30px gold';
+                countdownElement.style.boxShadow = '0 0 30px rgba(218, 165, 32, 0.5), 0 0 60px rgba(255, 0, 0, 0.5)';
+                countdownElement.textContent = '2';
+                countdownElement.style.animation = 'pulse 0.5s infinite alternate';
+                countdownElement.style.border = '4px solid red';
+
+                // Create cancel instructions
+                const instructionsElement = document.createElement('div');
+                instructionsElement.className = 'text-3xl text-white mt-8 bg-black bg-opacity-70 px-6 py-3 rounded-lg';
+                instructionsElement.style.textShadow = '0 0 5px white';
+                instructionsElement.innerHTML = 'PRESS BACKSPACE/ESC TO CANCEL';
+
+                // Add elements to the container
+                countdownContainer.appendChild(countdownElement);
+                countdownContainer.appendChild(instructionsElement);
+                document.body.appendChild(countdownContainer);
+
+                // Countdown from 2 to 1
+                setTimeout(() => {
+                    if (countdownElement && countdownElement.parentNode) {
+                        countdownElement.textContent = '1';
+                        countdownElement.style.animation = 'pulse 0.3s infinite alternate';
+                        countdownElement.style.color = 'red';
+                        countdownElement.style.textShadow = '0 0 15px red, 0 0 30px red';
+                        countdownElement.style.border = '4px solid yellow';
+                    }
+
+                    // Countdown from 1 to 0
+                    setTimeout(() => {
+                        if (countdownElement && countdownElement.parentNode) {
+                            countdownElement.textContent = '0';
+                            countdownElement.style.animation = 'pulse 0.2s infinite alternate';
+                            countdownElement.style.color = 'white';
+                            countdownElement.style.backgroundColor = 'red';
+                            countdownElement.style.textShadow = '0 0 15px white, 0 0 30px white';
+                            countdownElement.style.border = '4px solid white';
+                        }
+                    }, 1000);
+                }, 1000);
+
+                // Set a timeout before finalizing selection (after the countdown reaches 0)
+                const countdown = setTimeout(() => {
+                    console.log("2-SECOND COUNTDOWN FINISHED - FINALIZING SELECTION");
+                    if (countdownContainer && countdownContainer.parentNode) {
+                        document.body.removeChild(countdownContainer);
+                    }
+                    finalizeSelection(p1Char.name, p2Char.name);
+                }, 2300);
+
+                let finalizeBackupTimer: NodeJS.Timeout | null = null;
+                let checkCount = 0;
+
+                finalizeBackupTimer = setInterval(() => {
+                    // Get the countdown element to check its text
+                    const countdownEl = document.querySelector('#countdown-container div:first-child');
+
+                    if (countdownEl && countdownEl.textContent === '0') {
+                        checkCount++;
+                        console.log(`Countdown showing 0 for ${checkCount} seconds - may be stuck`);
+
+                        // If we see the "0" for more than 1 second after it should have finalized, it's stuck
+                        if (checkCount >= 1) {
+                            console.log("BACKUP TIMER TRIGGERED - Countdown appears stuck at 0");
+
+                            try {
+                                // Try to remove the countdown container
+                                const stuckContainer = document.getElementById('countdown-container');
+                                if (stuckContainer && document.body.contains(stuckContainer)) {
+                                    document.body.removeChild(stuckContainer);
+                                }
+                            } catch (err) {
+                                console.error("Error removing stuck countdown container", err);
+                            }
+
+                            // Clear this interval
+                            if (finalizeBackupTimer) {
+                                clearInterval(finalizeBackupTimer);
+                                finalizeBackupTimer = null;
+                            }
+
+                            // Finalize the selection
+                            finalizeSelection(p1Char.name, p2Char.name);
+                        }
+                    } else if (!document.getElementById('countdown-container')) {
+                        // If the countdown container is gone, clear the interval
+                        if (finalizeBackupTimer) {
+                            clearInterval(finalizeBackupTimer);
+                            finalizeBackupTimer = null;
+                        }
+                    }
+                }, 1000);
+
+                // Save the countdown timer ID so we can cancel it if needed
+                setState(prev => ({
+                    ...prev,
+                    finalCountdown: countdown
+                }));
+            }
+        } else {
+            // If either player cancels during countdown, clear the countdown
+            if (state.finalCountdown) {
+                console.log("CANCELLING COUNTDOWN - One player cancelled");
+                clearTimeout(state.finalCountdown);
+                setState(prev => ({
+                    ...prev,
+                    finalCountdown: null
+                }));
+
+                // Remove countdown message if exists
+                const countdownContainer = document.getElementById('countdown-container');
+                if (countdownContainer && countdownContainer.parentNode) {
+                    countdownContainer.parentNode.removeChild(countdownContainer);
+                }
+            }
+        }
+    };
+
     // Finalize characters selection
     const finalizeSelection = (p1Char: string, p2Char: string) => {
         // Get the character display names for status updates
         const p1CharObj = characters.find(c => c.name === p1Char);
         const p2CharObj = characters.find(c => c.name === p2Char);
-
-        // Update status text to show locked selections
-        /*
-        const p1Status = document.querySelector('.player-status.p1');
-        const p2Status = document.querySelector('.player-status.p2');
-
-        if (p1Status && p1CharObj) {
-            p1Status.textContent = `P1: ${p1CharObj.displayName} (Locked)`;
-        }
-        if (p2Status && p2CharObj) {
-            p2Status.textContent = `(Locked) ${p2CharObj.displayName} :P2`;
-        }
-        */
 
         // Play sound for final selection
         // playSound(confirmSoundRef.current);
@@ -467,26 +594,6 @@ export default function AgentSelectPage() {
                 }, 200);
             }, 100);
         }
-
-        // Show only the RESET button
-        /*if (resetButton) {
-            console.log("Showing RESET button");
-
-            // Show the reset button
-            resetButton.classList.remove('hidden');
-
-            // Make the button visible but start with it hidden
-            resetButton.style.display = 'block';
-            resetButton.style.opacity = '0';
-            resetButton.style.transform = 'translateY(20px)';
-
-            // Fade in the button after the READY message
-            setTimeout(() => {
-                resetButton.style.transition = 'all 0.3s ease-out';
-                resetButton.style.opacity = '1';
-                resetButton.style.transform = 'translateY(0)';
-            }, 600);
-        }*/
 
         setState(prev => ({
             ...prev,
