@@ -48,7 +48,8 @@ const ContractWriteTemple = ({
     // We no longer need to track lock duration
 
     // Game contract address
-    const contractAddress: AddressString = "0x66B0FBbEB420B63155d61ec5922293148bb796eC";
+    // joinGameContractAddress
+    const contractAddress: AddressString = "0x98b65ab65f908Ca25F3D4c793Af55C3386178E5b";
 
     // We're not using tokens anymore, so we don't need this logic
 
