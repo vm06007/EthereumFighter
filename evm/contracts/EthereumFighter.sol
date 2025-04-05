@@ -28,12 +28,17 @@ contract EthereumFighter is
     uint256 public player1FinalScore;
     uint256 public player2FinalScore;
     bool public scoresDecrypted;
+    
+    // Track if rewards have been claimed
+    bool public player1RewardClaimed;
+    bool public player2RewardClaimed;
 
     // Game rules
     struct GameRules {
-        uint256 gameStakingAmount;
+        uint256 gameStakingAmount; // Initial stake amount
         uint256 gameDuration;
         uint256 gameStartTime;
+        uint256 rewardAmount;      // Additional reward for the winner
         // Arrays should be the same length
         address[] assets;
         uint256[] assetAmounts;
@@ -46,6 +51,7 @@ contract EthereumFighter is
     event AssetTraded(address player, bool isBuy, uint256 timestamp);
     event ScoresDecrypted(uint256 player1Score, uint256 player2Score);
     event GameWinner(address winner);
+    event RewardClaimed(address player, uint256 amount, bool isWinner);
 
     // Errors
     error ZeroAddress();
@@ -59,11 +65,12 @@ contract EthereumFighter is
     error GameNotStarted();
     error GameStarted();
     error GameNotEnded();
-    error NotTheWinner();
+    error NotAPlayer();
     error DataIsNotDecrypted();
     error PriceOracleExpired();
     error PriceOracleInvalid();
     error MissingGameRules(address asset, uint256 amount);
+    error RewardAlreadyClaimed();
 
     constructor(
         address _dataFeeds,
@@ -74,6 +81,9 @@ contract EthereumFighter is
             revert ZeroAddress();
         }
         if (_gameRules.gameStakingAmount == 0) {
+            revert ZeroAmount();
+        }
+        if (_gameRules.rewardAmount == 0) {
             revert ZeroAmount();
         }
         if (_gameRules.gameDuration == 0) {
@@ -96,6 +106,8 @@ contract EthereumFighter is
         dataFeed = AggregatorV3Interface(_dataFeeds);
         oracleExpirationThreshold = _oracleExpirationThreshold;
         scoresDecrypted = false;
+        player1RewardClaimed = false;
+        player2RewardClaimed = false;
     }
 
     function enrollPlayer() public {
@@ -313,23 +325,57 @@ contract EthereumFighter is
     }
 
     function withdraw() public {
-        address winner = getWinner();
-        if (winner == address(0)) {
-            revert NotTheWinner();
-        }
-        if (msg.sender != winner) {
-            revert NotTheWinner();
-        }
+        // Ensure game has ended
         if (block.timestamp < gameRules.gameStartTime + gameRules.gameDuration) {
             revert GameNotEnded();
         }
-
-        // Transfer the staking amount to the winner
-        gameToken.safeTransfer(winner, gameRules.gameStakingAmount * 2);
+        
+        // Ensure player is a participant
+        if (msg.sender != player1 && msg.sender != player2) {
+            revert NotAPlayer();
+        }
+        
+        // Ensure scores have been decrypted
+        if (!scoresDecrypted) {
+            revert DataIsNotDecrypted();
+        }
+        
+        // Determine if the caller is player1 or player2
+        bool isPlayer1 = (msg.sender == player1);
+        
+        // Check if this player has already claimed their reward
+        if ((isPlayer1 && player1RewardClaimed) || (!isPlayer1 && player2RewardClaimed)) {
+            revert RewardAlreadyClaimed();
+        }
+        
+        // Get the winner
+        address winner = getWinner();
+        
+        // Calculate amount to return
+        uint256 amountToReturn = gameRules.gameStakingAmount;
+        bool isWinner = (msg.sender == winner);
+        
+        // Add reward amount if this player is the winner
+        if (isWinner && winner != address(0)) {
+            amountToReturn += gameRules.rewardAmount;
+        }
+        
+        // Mark as claimed
+        if (isPlayer1) {
+            player1RewardClaimed = true;
+        } else {
+            player2RewardClaimed = true;
+        }
+        
+        // Transfer tokens
+        gameToken.safeTransfer(msg.sender, amountToReturn);
+        
+        // Emit event
+        emit RewardClaimed(msg.sender, amountToReturn, isWinner);
     }
 
     function callbackUint256(
-        uint256 ,
+        uint256 requestID,
         uint256[] memory decryptedInput
     ) public onlyGateway {
         // Ensure we have all required values
