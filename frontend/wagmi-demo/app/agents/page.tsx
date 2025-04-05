@@ -553,6 +553,12 @@ export default function AgentSelectPage() {
                     {<h1 className="font-bold mb-2 text-white" style={{textAlign: "center"}}>
                         AI AGENT SELECT
                     </h1>}
+                    {/*<div className="controls-help text-center text-xs bg-black bg-opacity-50 p-2 rounded-md mb-4 max-w-[860px] mx-auto">
+                        <p>P1 ({player1Display}): WASD to move, SPACE to select, BACKSPACE to cancel</p>
+                        {hasTwoWallets && (
+                            <p>P2 ({player2Display}): Arrow keys to move, ENTER to select, ESC to cancel</p>
+                        )}
+                    </div>*/}
                     <div className="status-display text-left text-base font-bold my-4 max-w-[860px] mx-auto text-shadow-md">
                         <span style={{width: "46%", textAlign: "left"}} className="player-status p1 inline-block py-1 px-3 mx-1 rounded bg-red-700 bg-opacity-70 text-xs">
                             {`P1 ${state.p1.confirmed
@@ -675,21 +681,97 @@ export default function AgentSelectPage() {
                         </div>
                     </div>
 
-                    {/* Action buttons - Only appear after the 2-second window */}
-                    <div className="flex justify-center mt-4">
-                        {/* Reset button only - resets the selection */}
-                        <button
-                            className="reset-button hidden bg-[#dac751] text-[#0d0d3a] border-none py-3 px-8 font-bold rounded-md cursor-pointer text-xl hover:bg-yellow-300 transition-colors shadow-lg"
-                            onClick={resetGame}
-                            style={{
-                                display: 'none', /* Initially hidden, shown by JavaScript after finalization */
-                            }}
-                        >
-                            RESET
-                        </button>
+            {/* Modal for starting the game */}
+            {showStartModal && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-80 z-100">
+                    <div className="bg-gray-800 p-6 rounded-lg shadow-lg max-w-2xl w-full">
+                        <h2 className="text-2xl font-bold text-yellow-400 mb-4 text-center">AI Agents Selected!</h2>
+                        <div className="flex justify-between mb-6 gap-6">
+                            {/* Player 1 Character */}
+                            <div className="w-1/2">
+                                <div className="text-center mb-4">
+                                    <div className="bg-red-900 bg-opacity-70 p-2 rounded-md mb-2 inline-block">
+                                        <img
+                                            src={`/${selectedCharacters.p1}.avif`}
+                                            alt={selectedCharacters.p1}
+                                            style={{
+                                                width: '100px',
+                                                height: '120px',
+                                                objectFit: 'cover',
+                                                objectPosition: 'top center'
+                                            }}
+                                            className="mx-auto"
+                                        />
+                                    </div>
+                                    <p className="text-white">{player1Display}</p>
+                                </div>
+                            </div>
+
+                            <div className="flex-center text-white text-4xl font-bold">VS</div>
+
+                            {/* Player 2 Character */}
+                            <div className="w-1/2">
+                                <div className="text-center mb-4">
+                                    <div className="bg-blue-900 bg-opacity-70 p-2 rounded-md mb-2 inline-block">
+                                        <img
+                                            src={`/${selectedCharacters.p2}.avif`}
+                                            alt={selectedCharacters.p2}
+                                            style={{
+                                                width: '100px',
+                                                height: '120px',
+                                                objectFit: 'cover',
+                                                objectPosition: 'top center'
+                                            }}
+                                            className="mx-auto"
+                                        />
+                                    </div>
+                                    <p className="text-white">{player2Display}</p>
+                                </div>
+
+                                {/* Character Info */}
+                                <div className="p-3 rounded-md bg-gray-900 text-white text-sm">
+                                    {(() => {
+                                        const char = characters.find(c => c.name === selectedCharacters.p2);
+                                        return char ? (
+                                            <>
+                                                <div className="font-bold text-blue-400 mb-1">{char.displayName}</div>
+                                                <div className="mb-2 text-xs">
+                                                    <span className="text-gray-400">Model:</span> {char.modelType} ({char.llmModel})
+                                                </div>
+                                                {/*<div className="mb-2">
+                                                    <div className="text-gray-400 text-xs">Specialties:</div>
+                                                    <div className="flex flex-wrap gap-1 mt-1">
+                                                        {char.features.map((feature, idx) => (
+                                                            <span key={idx} className="text-xs px-1.5 py-0.5 bg-blue-900 rounded">
+                                                                {feature}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </div>*/}
+                                            </>
+                                        ) : null;
+                                    })()}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-between gap-4 mt-6">
+                            <button
+                                className="w-1/2 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-md text-lg"
+                                onClick={startGame}
+                            >
+                                Start Game
+                            </button>
+                            <button
+                                className="w-1/2 bg-red-700 hover:bg-red-800 text-white font-bold py-3 px-4 rounded-md text-lg"
+                                onClick={resetGame}
+                            >
+                                Reset
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 }
