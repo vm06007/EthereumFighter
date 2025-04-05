@@ -1,0 +1,429 @@
+'use client';
+
+import { useAccount, useEnsName } from 'wagmi';
+import { usePrivy, useWallets } from '@privy-io/react-auth';
+import { useSetActiveWallet } from '@privy-io/wagmi';
+import { shorten } from 'lib/utils';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState, useRef } from 'react';
+import { characters } from './characters';
+
+export default function AgentSelectPage() {
+    // Router for navigation
+    const router = useRouter();
+
+    // Wallet connections
+    const { address, isConnected } = useAccount();
+    const { data: ensName } = useEnsName({ address });
+    const { wallets } = useWallets();
+    const { setActiveWallet } = useSetActiveWallet();
+
+    // Check if two wallets are connected
+    const hasTwoWallets = wallets.length > 1;
+
+    // Find the second wallet (the one that's not active)
+    const secondWallet = wallets.find(wallet => wallet.address !== address);
+
+    // Player wallets display
+    const player1Display = address ? (ensName || shorten(address)) : 'Player 1';
+    const { data: player2EnsName } = useEnsName({
+        address: secondWallet?.address as `0x${string}`,
+        query: { enabled: !!secondWallet }
+    });
+    const player2Display = secondWallet ? (player2EnsName || shorten(secondWallet.address)) : 'Player 2';
+
+    // Game state
+    const [state, setState] = useState({
+        p1: {
+            focusIndex: 0,
+            confirmed: false,
+            selecting: true
+        } as any,
+        p2: {
+            focusIndex: hasTwoWallets ? 8 : 0,  // Start P2 at a different position
+            confirmed: false,
+            selecting: hasTwoWallets
+        } as any,
+        finalCountdown: null as NodeJS.Timeout | null,
+        selectionFinal: false
+    });
+
+    // Grid layout constants
+    const gridCols = 8;
+    const gridRows = Math.ceil(characters.length / gridCols);
+
+    // Audio references
+    const selectSoundRef = useRef<HTMLAudioElement | null>(null);
+    const confirmSoundRef = useRef<HTMLAudioElement | null>(null);
+
+    // Modal for final confirmation
+    const [showStartModal, setShowStartModal] = useState(false);
+    const [selectedCharacters, setSelectedCharacters] = useState({ p1: '', p2: '' });
+
+    // Initialize audio on component mount
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            selectSoundRef.current = new Audio('audio/beep-move.mp3');
+            confirmSoundRef.current = new Audio('audio/beep-move.mp3');
+
+            if (selectSoundRef.current) selectSoundRef.current.volume = 0.3;
+            if (confirmSoundRef.current) confirmSoundRef.current.volume = 0.4;
+        }
+
+        // Redirect if not connected
+        if (!isConnected) {
+            router.push('/');
+        }
+    }, [isConnected, router]);
+
+    const playSoundPlayer = (character: any) => {
+        try {
+            const p = new Audio(`audio/${character.name}.mp3`);
+            p.volume = 0.8
+            p.play();
+        } catch (err) {
+            console.error("Error playing sound:", err);
+        }
+    };
+
+    // Update focus for a player
+    const updateFocus = (player: 'p1' | 'p2') => {
+        // Avoid out-of-bounds errors
+        if (state[player].focusIndex >= characters.length) {
+            setState(prev => ({
+                ...prev,
+                [player]: {
+                    ...prev[player],
+                    focusIndex: 0
+                }
+            }));
+            return;
+        }
+
+        // Clear focus for this player from all characters
+        const characterElements = document.querySelectorAll('.character');
+        characterElements.forEach(char => {
+            char.classList.remove(`focus-${player}`);
+        });
+
+        // Set new focus on the selected character
+        const selectedElement = characterElements[state[player].focusIndex];
+        if (selectedElement) {
+            selectedElement.classList.add(`focus-${player}`);
+        }
+    };
+
+    // Confirm character selection
+    const confirmSelection = (player: 'p1' | 'p2') => {
+        // Skip if already confirmed
+        if (state[player].confirmed) return;
+
+        console.log(`${player.toUpperCase()} CONFIRMING SELECTION`);
+
+        // Get the selected character
+        const selectedChar = characters[state[player].focusIndex];
+
+        // Play confirmation sound
+        playSoundPlayer(selectedChar);
+
+        // Add confirmation flash effect - using a different name to avoid shadowing
+        const characterElements = document.querySelectorAll('.character');
+        const selectedElement = characterElements[state[player].focusIndex] as any;
+        if (selectedElement) {
+            // Apply flash effect using the flash animation from HTML
+            // We're directly manipulating the element style to use the flash animation
+            selectedElement.style.animation = 'flash 600ms linear';
+            setTimeout(() => {
+                selectedElement.style.animation = '';
+            }, 700);
+
+            // Add confirmation highlight
+            selectedElement.classList.add(`confirmed-${player}`);
+            setTimeout(() => {
+                selectedElement.classList.remove(`confirmed-${player}`);
+            }, 500);
+
+            // Also add active class to show selection
+            characterElements.forEach(char => {
+                char.classList.remove(`active-${player}`);
+            });
+            selectedElement.classList.add(`active-${player}`);
+        }
+
+        // Update state - this is crucial for the 2-second window to work
+        setState(prev => ({
+            ...prev,
+            [player]: {
+                ...prev[player],
+                confirmed: true,
+                selecting: false
+            }
+        }));
+        const otherPlayer = player === 'p1'
+            ? 'p2'
+            : 'p1';
+
+        const otherPlayerConfirmed = player === 'p1'
+            ? state.p2.confirmed
+            : state.p1.confirmed;
+
+        console.log(`${player.toUpperCase()} CONFIRMED, ${otherPlayer.toUpperCase()} CONFIRMED: ${otherPlayerConfirmed}`);
+    };
+
+    // Cancel selection
+    const cancelSelection = (player: 'p1' | 'p2') => {
+        console.log(`Attempting to cancel for ${player}. Final: ${state.selectionFinal}, Countdown: ${!!state.finalCountdown}`);
+
+        // IMPORTANT: If selection is final (2-second window has passed), cancel is not allowed
+        if (state.selectionFinal) {
+            console.log('Cannot cancel - selections are final after 2-second window');
+            return;
+        }
+
+        // If the countdown is running (we're in the 2-second window), allow cancellation
+        if (state.finalCountdown) {
+            console.log('Canceling during 2-second countdown window');
+
+            // Stop the countdown timer
+            clearTimeout(state.finalCountdown);
+
+            // Also clear any backup timers that might be running
+            // Find and clear all interval timers (this is a safety measure)
+            const highestId = window.setTimeout(() => {}, 0);
+            for (let i = highestId; i >= 0; i--) {
+                // Clear any intervals that might be our backup timer
+                window.clearInterval(i);
+            }
+
+            // Remove the countdown display
+            const countdownContainer = document.getElementById('countdown-container');
+            if (countdownContainer && countdownContainer.parentNode) {
+                countdownContainer.parentNode.removeChild(countdownContainer);
+            }
+
+            // Update player statuses in the UI
+            const p1Status = document.querySelector('.player-status.p1');
+            const p2Status = document.querySelector('.player-status.p2');
+
+            const p1Char = characters[state.p1.focusIndex];
+            const p2Char = characters[state.p2.focusIndex];
+
+            if (p1Status) {
+                p1Status.textContent = player === 'p1'
+                    ? `P1 ${p1Char.displayName}`
+                    : `P1 ${p1Char.displayName}`;
+            }
+
+            if (p2Status) {
+                p2Status.textContent = player === 'p2'
+                    ? `P2 ${p2Char.displayName}`
+                    : `P2 ${p2Char.displayName}`;
+            }
+
+            // Reset the countdown state
+            setState(prev => ({
+                ...prev,
+                finalCountdown: null
+            }));
+        }
+        // If the other player hasn't confirmed yet, allow normal cancellation
+        else {
+            const otherPlayer = player === 'p1' ? 'p2' : 'p1';
+            const otherPlayerConfirmed = state[otherPlayer].confirmed;
+
+            if (!otherPlayerConfirmed) {
+                console.log('Normal cancellation - other player has not confirmed');
+                // Allow normal cancellation
+            } else {
+                // Both confirmed but somehow no countdown is running - safety check
+                console.log('WARNING: Both confirmed but no countdown - should not happen');
+                return; // Don't allow cancellation in this unexpected state
+            }
+        }
+
+        // Proceed with cancellation
+
+        // Clear active selection but maintain focus
+        const characterElements = document.querySelectorAll('.character');
+        characterElements.forEach(char => {
+            char.classList.remove(`active-${player}`);
+        });
+
+        // Re-apply focus to the current index
+        const selectedElement = characterElements[state[player].focusIndex];
+        if (selectedElement) {
+            selectedElement.classList.add(`focus-${player}`);
+        }
+
+        // Update state
+        setState(prev => ({
+            ...prev,
+            [player]: {
+                ...prev[player],
+                confirmed: false,
+                selecting: true
+            }
+        }));
+
+        // Play sound to indicate cancellation
+        // playSound(selectSoundRef.current);
+    };
+
+    // Generate character grid classes
+    const getCharacterClass = (index: number) => {
+        const isP1Focus = state.p1.focusIndex === index && !state.p1.confirmed;
+        const isP2Focus = state.p2.focusIndex === index && !state.p2.confirmed;
+        const isP1Active = state.p1.focusIndex === index && state.p1.confirmed;
+        const isP2Active = state.p2.focusIndex === index && state.p2.confirmed;
+
+        return `character ${isP1Focus ? 'focus-p1' : ''} ${isP2Focus ? 'focus-p2' : ''} ${isP1Active ? 'active-p1' : ''} ${isP2Active ? 'active-p2' : ''}`;
+    };
+
+    // Handle character click
+    const handleCharacterClick = (index: number) => {
+        if (!state.selectionFinal) {
+            if (!state.p1.confirmed) {
+                setState(prev => ({
+                    ...prev,
+                    p1: {
+                        ...prev.p1,
+                        focusIndex: index
+                    }
+                }));
+                updateFocus('p1');
+                confirmSelection('p1');
+            } else if (hasTwoWallets && !state.p2.confirmed) {
+                setState(prev => ({
+                    ...prev,
+                    p2: {
+                        ...prev.p2,
+                        focusIndex: index
+                    }
+                }));
+                updateFocus('p2');
+                confirmSelection('p2');
+            }
+        }
+    };
+
+    return (
+        <div className="min-h-screen w-full flex justify-center items-center"
+            style={{
+                background: "url('/default.jpg')",
+                backgroundSize: 'cover',
+                backdropFilter: 'brightness(0.2) blur(2px)',
+                height: '100%'
+            }}>
+            <div style={{ position: 'absolute', backgroundColor: "#000000aa", backdropFilter: 'brightness(0.2) blur(2px)', height: '100vh', width: '100%', }}>
+
+            </div>
+            <div
+            style={{
+                background: "url('/world-0.jpg')",
+                backgroundSize: 'contain',
+                backdropFilter: 'brightness(0.2) blur(2px)',
+            }}
+            className="bg-black bg-opacity-70 h-screen">
+                <div
+
+                style={{
+                    backgroundSize: 'cover',
+                    backdropFilter: 'brightness(0.2) blur(2px)',
+                }}
+
+                className="inner w-full h-full backdrop-blur-sm backdrop-brightness-[0.2] p-4">
+                {/* Add CSS for character selection states */}
+                    {<h1 className="font-bold mb-2 text-white" style={{textAlign: "center"}}>
+                        AI AGENT SELECT
+                    </h1>}
+                    {/*<div className="controls-help text-center text-xs bg-black bg-opacity-50 p-2 rounded-md mb-4 max-w-[860px] mx-auto">
+                        <p>P1 ({player1Display}): WASD to move, SPACE to select, BACKSPACE to cancel</p>
+                        {hasTwoWallets && (
+                            <p>P2 ({player2Display}): Arrow keys to move, ENTER to select, ESC to cancel</p>
+                        )}
+                    </div>*/}
+                    <div className="status-display text-left text-base font-bold my-4 max-w-[860px] mx-auto text-shadow-md">
+                        <span style={{width: "46%", textAlign: "left"}} className="player-status p1 inline-block py-1 px-3 mx-1 rounded bg-red-700 bg-opacity-70 text-xs">
+                            {`P1 ${state.p1.confirmed
+                                ? `${characters[state.p1.focusIndex].displayName}`
+                                : state.p1.focusIndex < characters.length
+                                    ? characters[state.p1.focusIndex].displayName
+                                    : 'Selecting'}`}
+                        </span>
+
+                        {hasTwoWallets && (
+                            <span style={{width: "46%", textAlign: "right"}} className="player-status p2 inline-block py-1 px-3 mx-1 rounded bg-blue-700 bg-opacity-70 text-xs">
+                                {`${state.p2.confirmed
+                                    ? `${characters[state.p2.focusIndex].displayName}`
+                                    : state.p2.focusIndex < characters.length
+                                        ? characters[state.p2.focusIndex].displayName
+                                        : 'Selecting'}`} :P2
+                            </span>
+                        )}
+                    </div>
+                    <div className="select-container w-[850px] mx-auto my-4 p-[4px_4px_0px]" id="select-container" style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(8, 100px)',
+                        gridTemplateRows: 'repeat(2, 120px)',
+                        gap: '7px',
+                        paddingBottom: '7px',
+                        background: 'rgba(255, 255, 255, 0.5)',
+                        justifyContent: 'center'
+                    }}>
+                        {characters.map((char, index) => (
+                            <div
+                                key={char.name}
+                                className={getCharacterClass(index)}
+                                onClick={() => handleCharacterClick(index)}
+                                data-name={char.name}
+                                style={{
+                                    width: '100px',
+                                    height: '120px',
+                                    background: 'rgba(255, 255, 255, 0.5)',
+                                    cursor: 'pointer',
+                                    position: 'relative',
+                                    textAlign: 'center',
+                                    transition: 'all 0.2s ease-in-out',
+                                    overflow: 'hidden'
+                                }}
+                                // rel={char.displayName}
+                            >
+                                <div className="img-container" style={{
+                                    position: 'relative',
+                                    width: '100px',
+                                    height: '120px',
+                                    overflow: 'hidden',
+                                    display: 'flex',
+                                    justifyContent: 'center'
+                                }}>
+                                    <img
+                                        className="character__img"
+                                        src={`/${char.name}.avif`}
+                                        alt={char.displayName}
+                                        style={{
+                                            filter: 'grayscale(0.99)',
+                                            height: '120px',
+                                            width: 'auto',
+                                            margin: 0,
+                                            padding: 0
+                                        }}
+                                    />
+                                    <p className="character__name" style={{
+                                        position: 'absolute',
+                                        width: '100%',
+                                        bottom: 0,
+                                        display: 'none',
+                                        margin: 0,
+                                        padding: 0
+                                    }}>
+                                        {char.displayName}
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
