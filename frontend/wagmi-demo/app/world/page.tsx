@@ -14,6 +14,12 @@ const generateMap = () => {
     const map = Array(80).fill(0).map(() => Array(80).fill(0));
     // Wall
 
+    // Temples
+    [
+        [44, 14],
+    ].forEach(([y, x]) => {
+        map[y][x] = 1; // Temple
+    });
 
     // Add some rivers (4) and bridges (5)
     for (let i = 10; i < 50; i++) {
