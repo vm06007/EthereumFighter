@@ -61,7 +61,7 @@ export default function WorldPage() {
                     className="bg-gray-700 p-2 rounded-lg"
                     onClick={() => router.push('/')}
                 >
-                    Back to Main Menu
+                    Bridge My ETH Now!
                 </button>
             </div>
         </div>

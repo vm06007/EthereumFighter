@@ -297,3 +297,10 @@ h1 {
     opacity: 0.2;
     z-index: 100;
 }
+
+.bb-button {
+    position: absolute;
+    margin-top: -75px;
+    margin-left: -325px;
+    filter: brightness(2) contrast(2);
+}

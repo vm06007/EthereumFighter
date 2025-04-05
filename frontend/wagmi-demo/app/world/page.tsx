@@ -7,7 +7,7 @@ import { shorten } from "lib/utils";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import ContractWriteTemple from '../../components/ContractWriteTemple';
-// import SendTransactionMint from '../../components/SendTransactionMint';
+import SendTransactionMint from '../../components/SendTransactionMint';
 
 // Generate a 80x80 map filled with 0s
 const generateMap = () => {
@@ -255,7 +255,7 @@ const BridgeModal = ({
                 borderRadius: '5px',
                 boxShadow: '0 0 10px rgba(0, 0, 0, 0.5)',
                 zIndex: 20,
-                minWidth: '380px'
+                minWidth: '300px'
             }}
         >
             <div className="bridge-modal-content">
@@ -275,8 +275,19 @@ const BridgeModal = ({
                 </div>
 
                 {/* SendTransactionMint component instead of buttons */}
+                <div id="bridge-mint-button">
+                    <SendTransactionMint
+                        to="0x641AD78BAca220C5BD28b51Ce8e0F495e85Fe689"
+                        amount="0.01"
+                        // warning="We recommend doing this on a testnet (Sepolia)."
+                        buttonText="Mint"
+                        onSuccess={handleTransactionSuccess}
+                        onClose={onClose}
+                        playerAddress={playerWallet}
+                    />
+                </div>
 
-                <div className="mt-4 text-center">
+                {/*<div className="mt-4 text-center">
                     <button
                         id="bridge-leave-button"
                         className="leave-button py-2 px-4 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
@@ -289,7 +300,7 @@ const BridgeModal = ({
                             Cancel
                         </div>
                     </button>
-                </div>
+                </div>*/}
             </div>
         </div>
     );
@@ -810,10 +821,10 @@ export default function WorldPage() {
                             {/*<p>Player 1: Arrow Keys | Player 2: WASD</p>*/}
                             <p>The Bridge is not build yet - use 1INCH Fusion+</p>
                             <button
-                                className="mt-1 bg-gray-700 p-1 rounded"
+                                className="bb-button  mt-1 bg-gray-700 p-1 rounded"
                                 onClick={() => router.push('/')}
                             >
-                                Back to Main Menu
+                                Bridge My ETH Now!
                             </button>
                         </div>
                     )}
