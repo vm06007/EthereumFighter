@@ -1,33 +1,26 @@
 'use client';
 
-import { parseUnits } from 'viem';
 import { useState } from 'react';
 import Wrapper from 'components/Wrapper';
 import { shorten, type AddressString } from 'lib/utils';
 import { useEffect } from 'react';
-import { sepolia } from 'viem/chains';
 import { useAccount, useWriteContract } from 'wagmi';
 
 import Button from './Button';
 import MonoLabel from './MonoLabel';
 
-// Temple interaction ABI
+// Game interaction ABI
 const ABI = [
     {
-        inputs: [
+        inputs: [],
+        name: "joinGame",
+        outputs: [
             {
-                internalType: "uint256",
-                name: "amount",
-                type: "uint256",
-            },
-            {
-                internalType: "uint256",
-                name: "lockDuration",
-                type: "uint256",
+                internalType: "uint8",
+                name: "playerNumber",
+                type: "uint8",
             },
         ],
-        name: "lockTokens",
-        outputs: [],
         stateMutability: "nonpayable",
         type: "function",
     },
@@ -42,6 +35,7 @@ type ContractWriteTempleProps = {
     onClose: () => void;
 };
 
+// Component still named ContractWriteTemple for backward compatibility
 const ContractWriteTemple = ({
     playerAddress,
     playerWallet,
@@ -50,30 +44,12 @@ const ContractWriteTemple = ({
     templeId,
     onClose
 }: ContractWriteTempleProps) => {
-    // State to store the lock duration
-    const [lockDuration, setLockDuration] = useState<string>("30"); // Default 30 days
+    // We no longer need to track lock duration
 
-    // USDC on Mainnet
-    const contractAddress: AddressString = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
-    const knownTokens: Record<string, AddressString> = {
-        DAI: "0x6B175474E89094C44Da98b954EedeAC495271d0F",
-        USDC: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
-        USDT: "0xdAC17F958D2ee523a2206206994597C13D831ec7"
-    };
-    const tokenDecimals: Record<string, number> = {
-        [knownTokens.DAI.toLowerCase()]: 18,
-        [knownTokens.USDC.toLowerCase()]: 6,
-        [knownTokens.USDT.toLowerCase()]: 6
-    };
+    // Game contract address
+    const contractAddress: AddressString = "0x66B0FBbEB420B63155d61ec5922293148bb796eC";
 
-    // Determine token address
-    let finalAddress: AddressString | undefined;
-    if (token.startsWith("0x") && token.length === 42) {
-        finalAddress = token as AddressString;
-    } else {
-        const upper = token.toUpperCase();
-        finalAddress = knownTokens[upper];
-    }
+    // We're not using tokens anymore, so we don't need this logic
 
     const { data, error, isError, isPending, writeContract } = useWriteContract();
 
@@ -84,20 +60,15 @@ const ContractWriteTemple = ({
         }
     }, [error]);
 
-    // Handle locking tokens in the temple
-    const handleLockTokens = () => {
-        if (!amount || !lockDuration) return;
-
-        console.log(`Player ${playerWallet} is locking ${amount} tokens at temple ${templeId}`);
+    // Handle joining the game
+    const handleJoinGame = () => {
+        console.log(`Player ${playerWallet} is joining the game at temple ${templeId}`);
 
         writeContract?.({
             abi: ABI,
-            address: finalAddress || contractAddress,
-            functionName: "lockTokens",
-            args: [
-                parseUnits(amount, tokenDecimals[finalAddress?.toLowerCase() || ""] ?? 6),
-                BigInt(parseInt(lockDuration) * 24 * 60 * 60) // Convert days to seconds
-            ]
+            address: contractAddress,
+            functionName: "joinGame",
+            args: []
         });
     };
 
@@ -141,15 +112,7 @@ const ContractWriteTemple = ({
                     <span>{token}</span>
                 </div>
             </div>*/}
-            <div className="hidden mb-4">
-                <label className="block text-sm font-medium mb-1">Lock Duration (days)</label>
-                <input
-                    type="text"
-                    value={lockDuration}
-                    onChange={(e) => setLockDuration(e.target.value)}
-                    className="p-2 border rounded w-full"
-                />
-            </div>
+            {/* No need for duration input field anymore */}
             {data && !isError && (
                 <div className="mb-4 p-2 bg-green-100 rounded">
                     Transaction hash: <MonoLabel label={shorten(data)} />
@@ -169,7 +132,7 @@ const ContractWriteTemple = ({
                 </div>
                 <Button
                     disabled={isPending}
-                    onClick_={handleLockTokens}
+                    onClick_={handleJoinGame}
                     cta="Enter"
                 />
                 </div>
