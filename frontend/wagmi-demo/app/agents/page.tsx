@@ -10,6 +10,10 @@ import { characters } from './characters';
 
 type PlayerState = {
     focusIndex: number;
+    confirmed: boolean;
+    selecting: boolean;
+};
+
 export default function AgentSelectPage() {
     // Router for navigation
     const router = useRouter();
@@ -161,13 +165,12 @@ export default function AgentSelectPage() {
                 selecting: false
             }
         }));
-        const otherPlayer = player === 'p1'
-            ? 'p2'
-            : 'p1';
 
-        const otherPlayerConfirmed = player === 'p1'
-            ? state.p2.confirmed
-            : state.p1.confirmed;
+        // Since setState is asynchronous, we'll use the updated state in
+        // the useEffect hook that watches for confirmed state changes.
+        // This function will just log info.
+        const otherPlayer = player === 'p1' ? 'p2' : 'p1';
+        const otherPlayerConfirmed = player === 'p1' ? state.p2.confirmed : state.p1.confirmed;
 
         console.log(`${player.toUpperCase()} CONFIRMED, ${otherPlayer.toUpperCase()} CONFIRMED: ${otherPlayerConfirmed}`);
     };
@@ -270,6 +273,88 @@ export default function AgentSelectPage() {
         // Play sound to indicate cancellation
         // playSound(selectSoundRef.current);
     };
+    // Reset game selections
+    const resetGame = () => {
+        // Clear all selections and states
+        const characterElements = document.querySelectorAll('.character');
+        characterElements.forEach((char) => {
+            char.classList.remove('active-p1', 'active-p2', 'focus-p1', 'focus-p2');
+        });
+
+        // Hide the modal, ready message and reset button
+        setShowStartModal(false);
+
+        const readyMessage = document.querySelector('.ready-message') as any;
+        const resetButton = document.querySelector('.reset-button') as any;
+
+        if (readyMessage) {
+            // Animate out
+            readyMessage.style.transition = 'all 0.3s ease-in';
+            readyMessage.style.transform = 'scale(0.8)';
+            readyMessage.style.opacity = '0';
+
+            // Then hide
+            setTimeout(() => {
+                readyMessage.classList.add('hidden');
+                readyMessage.style.animation = '';
+            }, 300);
+        }
+
+        if (resetButton) {
+            // Animate out the reset button
+            resetButton.style.transition = 'all 0.2s ease-in';
+            resetButton.style.opacity = '0';
+            resetButton.style.transform = 'translateY(20px)';
+
+            // Then hide it
+            setTimeout(() => {
+                resetButton.style.display = 'none';
+            }, 200);
+        }
+
+        // Also remove any countdown container that might be present
+        const countdownContainer = document.getElementById('countdown-container');
+        if (countdownContainer && countdownContainer.parentNode) {
+            countdownContainer.parentNode.removeChild(countdownContainer);
+        }
+
+        // Clear any backup timers that might be running
+        // Find and clear all interval timers (this is a safety measure)
+        const highestId = window.setTimeout(() => {}, 0);
+        for (let i = highestId; i >= 0; i--) {
+            // Clear any intervals
+            window.clearInterval(i);
+        }
+
+        // Reset state
+        setState({
+            p1: {
+                focusIndex: state.p1.focusIndex,
+                confirmed: false,
+                selecting: true
+            },
+            p2: {
+                focusIndex: state.p2.focusIndex,
+                confirmed: false,
+                selecting: hasTwoWallets
+            },
+            finalCountdown: null,
+            selectionFinal: false
+        });
+
+        // Set initial focus for both players
+        setTimeout(() => {
+            updateFocus('p1');
+            if (hasTwoWallets) updateFocus('p2');
+        }, 50);
+    };
+
+    // Start game with selected characters
+    const startGame = () => {
+        // Navigate to the world page with selected characters as query params
+        router.push(`/round?p1=${encodeURIComponent(selectedCharacters.p1)}&p2=${encodeURIComponent(selectedCharacters.p2)}`);
+    };
+
 
     // Generate character grid classes
     const getCharacterClass = (index: number) => {
