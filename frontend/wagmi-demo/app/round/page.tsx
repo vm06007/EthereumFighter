@@ -63,9 +63,12 @@ export default function Home() {
 
     // State for suggested commands that can be updated
     const [commands, setCommands] = useState([
-        { text: "Swap 10 USD for ETH ", category: "usd_to_eth", valueIndex: 1, step: 5 },
         { text: "Swap 0.5 ETH for USD", category: "eth_to_usd", valueIndex: 1, step: 0.1 },
-        { text: "Buy 10 ETH with USD", category: "buy_eth", valueIndex: 1, step: 5 },
+        { text: "Swap 10 USD for ETH", category: "usd_to_eth", valueIndex: 1, step: 5 },
+        { text: "Swap 5 CELO for USD", category: "celo_to_usd", valueIndex: 1, step: 1 },
+        { text: "Swap 10 1INCH for USD", category: "1inch_to_usd", valueIndex: 1, step: 5 },
+        { text: "Swap 5 USD for CELO", category: "usd_to_celo", valueIndex: 1, step: 1 },
+        { text: "Swap 5 USD for 1INCH", category: "usd_to_1inch", valueIndex: 1, step: 1 },
         { text: "Check market prices", category: "check_balance" },
         { text: "Increase stake by 0.1 ETH", category: "action_stake_increase", valueIndex: 1, step: 0.1 }
     ]);
