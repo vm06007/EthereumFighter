@@ -189,7 +189,6 @@ export default function AgentSelectPage() {
     // Play sound helper function
     const playSoundSelect = () => {
         try {
-            s.play();
         } catch (err) {
             console.error("Error playing sound:", err);
         }
@@ -720,6 +719,7 @@ export default function AgentSelectPage() {
         }, 50);
     };
 
+
     const setActiveWalletForPlayer = (player: 'p1' | 'p2') => {
         if (player === 'p1') {
             // Set wallet 1 as active
@@ -991,6 +991,7 @@ export default function AgentSelectPage() {
                                     ? characters[state.p1.focusIndex].displayName
                                     : 'Selecting'}`}
                         </span>
+
                         {hasTwoWallets && (
                             <span style={{width: "46%", textAlign: "right"}} className="player-status p2 inline-block py-1 px-3 mx-1 rounded bg-blue-700 bg-opacity-70 text-xs">
                                 {`${state.p2.confirmed
@@ -1001,6 +1002,7 @@ export default function AgentSelectPage() {
                             </span>
                         )}
                     </div>
+
                     <div className="select-container w-[850px] mx-auto my-4 p-[4px_4px_0px]" id="select-container" style={{
                         display: 'grid',
                         gridTemplateColumns: 'repeat(8, 100px)',
