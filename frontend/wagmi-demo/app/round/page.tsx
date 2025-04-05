@@ -7,8 +7,14 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { shorten } from 'lib/utils';
 import { useAccount, useEnsName } from 'wagmi';
+import { useSearchParams } from 'next/navigation';
 
 export default function Home() {
+    // Get URL parameters
+    const searchParams = useSearchParams();
+    const player1Param = searchParams.get('p1') || 'Vitalik Buterin';
+    const player2Param = searchParams.get('p2') || 'Vitalik Buterin';
+    
     // Get connected account information
     const { address, isConnected } = useAccount();
     // Try to get ENS name for the connected address
@@ -16,6 +22,10 @@ export default function Home() {
 
     // For second player (in a real app, this would come from another connection)
     const [player2Address, setPlayer2Address] = useState<string | null>(null);
+    
+    // State for player character images
+    const [player1Image, setPlayer1Image] = useState<string>('./vitalik.jpg');
+    const [player2Image, setPlayer2Image] = useState<string>('./vitalik2.jpg');
 
     const [messages, setMessages] = useState<ChatMessageType[]>([]);
     const [messages2, setMessages2] = useState<ChatMessageType[]>([]);
@@ -65,6 +75,38 @@ export default function Home() {
     const inputRef = useRef<HTMLInputElement>(null);
     const chatWindowRef = useRef<HTMLDivElement>(null);
 
+    // Effect to set player images based on URL parameters
+    useEffect(() => {
+        // Select the proper Vitalik image for player position (P1 or P2)
+        const getVitalikImage = (isPlayer1: boolean): string => {
+            return isPlayer1 ? './vitalik.jpg' : './vitalik2.jpg';
+        };
+        
+        // Helper function to create image path for a character
+        const getCharacterImagePath = (character: string, isPlayer1: boolean): string => {
+            // For Vitalik Buterin, use the default images based on player position
+            if (character === 'Vitalik Buterin') {
+                return getVitalikImage(isPlayer1);
+            }
+            
+            // Remove any spaces and special characters, convert to proper filename
+            const formattedName = character
+                .replace(/[^\w\s]/gi, '')  // Remove special chars
+                .replace(/\s+/g, ' ')      // Normalize spaces
+                .trim();
+            
+            // Return the path with .avif extension
+            return `./${formattedName}.avif`;
+        };
+        
+        // Set images based on the character names from URL and their player position
+        setPlayer1Image(getCharacterImagePath(player1Param, true));  // true = is Player 1
+        setPlayer2Image(getCharacterImagePath(player2Param, false)); // false = is Player 2
+        
+        console.log(`Loading characters: P1=${player1Param}, P2=${player2Param}`);
+        console.log(`Character images: P1=${getCharacterImagePath(player1Param, true)}, P2=${getCharacterImagePath(player2Param, false)}`);
+    }, [player1Param, player2Param]);
+    
     // Effect for simulating loading animation when page first loads
     useEffect(() => {
         // Generate a random address for player 2 right away
@@ -516,7 +558,7 @@ export default function Home() {
                 <div
                     ref={chatWindowRef}
                     style={{
-                        background: isPageLoading ? "none" : "url(./vitalik.jpg)",
+                        background: isPageLoading ? "none" : `url(${player1Image})`,
                         backgroundSize: "cover",
                         position: "relative",
                         backgroundColor: isPageLoading ? "rgba(0,0,0,0.5)" : "transparent",
@@ -739,7 +781,7 @@ export default function Home() {
                 </div>
                 <div
                     style={{
-                        background: isPageLoading ? "none" : "url(./vitalik2.jpg)",
+                        background: isPageLoading ? "none" : `url(${player2Image})`,
                         backgroundColor: isPageLoading ? "rgba(0,0,0,0.5)" : "transparent",
                         backgroundSize: "cover",
                         // Add reveal animation clipping when not loading
