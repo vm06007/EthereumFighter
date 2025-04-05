@@ -9,6 +9,28 @@ import { useEffect, useState, useRef } from "react";
 import ContractWriteTemple from '../../components/ContractWriteTemple';
 import SendTransactionMint from '../../components/SendTransactionMint';
 
+const vibrateController = () => {
+    if (typeof navigator !== 'undefined' && navigator.getGamepads) {
+        const gamepads = navigator.getGamepads();
+        const gamepad = Array.from(gamepads).find(gp => gp !== null);
+
+        if (!gamepad) {
+            console.log("No gamepad detected");
+            return;
+        }
+
+        if (gamepad.vibrationActuator && 'playEffect' in gamepad.vibrationActuator) {
+            gamepad.vibrationActuator.playEffect('dual-rumble', {
+                startDelay: 0,
+                duration: 500,
+                weakMagnitude: 1.0,
+                strongMagnitude: 1.0
+            });
+        }
+    }
+};
+
+
 // Generate a 80x80 map filled with 0s
 const generateMap = () => {
 
@@ -185,6 +207,13 @@ const TempleModal = ({
 }) => {
     if (!isOpen) return null;
 
+    // Vibrate when modal is first displayed
+    useEffect(() => {
+        if (isOpen) {
+            vibrateController();
+        }
+    }, [isOpen]);
+
     return (
         <div
             className="modal"
@@ -232,6 +261,13 @@ const BridgeModal = ({
     fetchBalances?: () => Promise<void>  // Function to refresh token balances
 }) => {
     if (!isOpen) return null;
+
+    // Vibrate when modal is first displayed
+    useEffect(() => {
+        if (isOpen) {
+            vibrateController();
+        }
+    }, [isOpen]);
 
     // Transaction success handler
     const handleTransactionSuccess = (txHash: string, amount: string) => {
@@ -359,12 +395,12 @@ export default function WorldPage() {
     const [map] = useState(() => generateMap());
 
     // State for player positions
-    const [player1Position, setPlayer1Position] = useState({ x: 10, y: 20 });
+    const [player1Position, setPlayer1Position] = useState({ x: 21, y: 30 });
     const [player1Frame, setPlayer1Frame] = useState(0);
     const [player1Direction, setPlayer1Direction] = useState(0); // 0=down, -128=up, -64=right, -192=left
 
     // State for player 2
-    const [player2Position, setPlayer2Position] = useState({ x: 21, y: 30 });
+    const [player2Position, setPlayer2Position] = useState({  x: 10, y: 20 });
     const [player2Frame, setPlayer2Frame] = useState(0);
     const [player2Direction, setPlayer2Direction] = useState(0);
 
@@ -507,6 +543,10 @@ export default function WorldPage() {
                 calculatedTempleId = 3;
             }
 
+            if (tx > 50) {
+                calculatedTempleId = 4;
+            }
+
             // Set the active wallet based on which player is interacting
             if (playerNum === 1) {
                 // Player 1's wallet should already be active
@@ -520,6 +560,7 @@ export default function WorldPage() {
             setTempleId(calculatedTempleId);
             setModalPosition({ x: tx, y: ty });
             setActivePlayerNumber(playerNum);
+
             setModalOpen(true);
             return true;
         }
