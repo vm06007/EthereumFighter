@@ -585,7 +585,6 @@ export default function AgentSelectPage() {
 
         // Play sound for final selection
         // playSound(confirmSoundRef.current);
-        // vibrateController();
         vibrateController();
 
         // Show ready message with animation
@@ -721,12 +720,195 @@ export default function AgentSelectPage() {
         }, 50);
     };
 
+    const setActiveWalletForPlayer = (player: 'p1' | 'p2') => {
+        if (player === 'p1') {
+            // Set wallet 1 as active
+            const wallet1 = wallets[0];
+            if (wallet1 && wallet1.address !== address) {
+                setActiveWallet(wallet1);
+            }
+        } else if (player === 'p2' && secondWallet) {
+            // Set wallet 2 as active
+            setActiveWallet(secondWallet);
+        }
+    };
+
     // Start game with selected characters
     const startGame = () => {
         // Navigate to the world page with selected characters as query params
         router.push(`/round?p1=${encodeURIComponent(selectedCharacters.p1)}&p2=${encodeURIComponent(selectedCharacters.p2)}`);
     };
 
+
+    // Handle keyboard input
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (keyState.current[event.code]) return; // Prevent key repeat
+            keyState.current[event.code] = true;
+
+            // If modal is open, handle it differently
+            if (showStartModal) {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    startGame();
+                } else if (event.key === 'Escape') {
+                    resetGame();
+                }
+                return;
+            }
+
+            // If selection is final (after 2-second window), only allow RESET
+            if (state.selectionFinal) {
+                if (event.key === 'Escape' || event.key === 'Backspace' ||
+                    event.key === 'Enter' || event.key === ' ') {
+                    resetGame();
+                }
+                return;
+            }
+
+            // Normal game controls
+            if (!state.selectionFinal) {
+                // P1 controls (WASD + Space + Backspace)
+                switch (event.key) {
+                    case 'w':
+                    case 'W':
+                        if (state.p1.selecting) {
+                            // Don't switch wallet for movement
+                            movePlayer('p1', 'up');
+                        }
+                        break;
+                    case 's':
+                    case 'S':
+                        if (state.p1.selecting) {
+                            // Don't switch wallet for movement
+                            movePlayer('p1', 'down');
+                        }
+                        break;
+                    case 'a':
+                    case 'A':
+                        if (state.p1.selecting) {
+                            // Don't switch wallet for movement
+                            movePlayer('p1', 'left');
+                        }
+                        break;
+                    case 'd':
+                    case 'D':
+                        if (state.p1.selecting) {
+                            // Don't switch wallet for movement
+                            movePlayer('p1', 'right');
+                        }
+                        break;
+                    case ' ':
+                        if (!state.selectionFinal) {
+                            if (state.p1.selecting && !state.p1.confirmed) {
+                                setActiveWalletForPlayer('p1');
+                                confirmSelection('p1');
+                            }
+                        }
+                        break;
+                    case 'Backspace':
+                        // Allow P1 to cancel when they've confirmed
+                        // During 2-second window OR when P2 hasn't confirmed yet
+                        console.log("P1 BACKSPACE", {
+                            confirmed: state.p1.confirmed,
+                            finalCountdown: !!state.finalCountdown,
+                            isFinal: state.selectionFinal,
+                            p2Confirmed: state.p2.confirmed
+                        });
+
+                        // If selection is not final yet and P1 has confirmed
+                        if (state.p1.confirmed && !state.selectionFinal) {
+                            console.log("P1 CANCELLING");
+                            setActiveWalletForPlayer('p1');
+                            cancelSelection('p1');
+                        }
+                        break;
+                }
+
+                // P2 controls (Arrow keys + Enter + Escape)
+                // Only enable if two wallets are connected
+                if (hasTwoWallets) {
+                    switch (event.key) {
+                        case 'ArrowUp':
+                            if (state.p2.selecting) {
+                                // Don't switch wallet for movement
+                                movePlayer('p2', 'up');
+                            }
+                            break;
+                        case 'ArrowDown':
+                            if (state.p2.selecting) {
+                                // Don't switch wallet for movement
+                                movePlayer('p2', 'down');
+                            }
+                            break;
+                        case 'ArrowLeft':
+                            if (state.p2.selecting) {
+                                // Don't switch wallet for movement
+                                movePlayer('p2', 'left');
+                            }
+                            break;
+                        case 'ArrowRight':
+                            if (state.p2.selecting) {
+                                // Don't switch wallet for movement
+                                movePlayer('p2', 'right');
+                            }
+                            break;
+                        case 'Enter':
+                            if (!state.selectionFinal) {
+                                if (state.p2.selecting && !state.p2.confirmed) {
+                                    setActiveWalletForPlayer('p2');
+                                    confirmSelection('p2');
+                                }
+                            }
+                            break;
+                        case 'Escape':
+                            // Allow P2 to cancel when they've confirmed
+                            // During 2-second window OR when P1 hasn't confirmed yet
+                            console.log("P2 ESCAPE", {
+                                confirmed: state.p2.confirmed,
+                                finalCountdown: !!state.finalCountdown,
+                                isFinal: state.selectionFinal,
+                                p1Confirmed: state.p1.confirmed
+                            });
+
+                            // If selection is not final yet and P2 has confirmed
+                            if (state.p2.confirmed && !state.selectionFinal) {
+                                console.log("P2 CANCELLING");
+                                setActiveWalletForPlayer('p2');
+                                cancelSelection('p2');
+                            }
+                            break;
+                    }
+                }
+            }
+        };
+
+        const handleKeyUp = (event: KeyboardEvent) => {
+            keyState.current[event.code] = false;
+        };
+
+        // Add event listeners
+        window.addEventListener('keydown', handleKeyDown);
+        window.addEventListener('keyup', handleKeyUp);
+
+        // Cleanup
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('keyup', handleKeyUp);
+
+            // Clear any pending timeouts
+            if (state.finalCountdown) {
+                clearTimeout(state.finalCountdown);
+            }
+        };
+    }, [
+        state,
+        showStartModal,
+        hasTwoWallets,
+        wallets,
+        address,
+        secondWallet,
+        setActiveWallet
+    ]);
 
     // Generate character grid classes
     const getCharacterClass = (index: number) => {
