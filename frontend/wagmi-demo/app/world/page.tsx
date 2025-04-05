@@ -199,7 +199,7 @@ const TempleModal = ({
                 borderRadius: '5px',
                 boxShadow: '0 0 10px rgba(0, 0, 0, 0.5)',
                 zIndex: 20,
-                minWidth: '300px'
+                minWidth: '360px'
             }}
         >
             <ContractWriteTemple
@@ -498,7 +498,16 @@ export default function WorldPage() {
             const [tx, ty] = templePos;
             // Calculate temple ID based on position (simplified logic)
             // const calculatedTempleId = (tx + ty) % 3 + 1; // This will give values 1, 2, or 3
-            const calculatedTempleId = 1; // This will give values 1, 2, or 3
+            console.log(tx)
+            console.log(ty)
+            let calculatedTempleId = 1; // This will give values 1, 2, or 3
+
+            if (tx > 50) {
+                calculatedTempleId = 2;
+            }
+            if (tx > 60) {
+                calculatedTempleId = 3;
+            }
 
             // Set the active wallet based on which player is interacting
             if (playerNum === 1) {
@@ -747,7 +756,7 @@ export default function WorldPage() {
                     style={{
                         position: 'fixed',
                         height: '100vh',
-                        overflow: 'hidden',
+                        // overflow: 'hidden',
                         transform: 'scale(1.1)',
                         filter: 'brightness(0.8) contrast(1.4)',
                         backgroundImage: "url('/world-0.jpg')",

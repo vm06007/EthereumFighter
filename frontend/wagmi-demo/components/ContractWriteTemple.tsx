@@ -102,7 +102,7 @@ const ContractWriteTemple = ({
     };
 
     return (
-        <div className="temple-interaction bg-white p-4 rounded-lg max-w-md mx-auto text-black">
+        <div className="temple-interaction bg-white p-0 rounded-lg max-w-md mx-auto text-black">
             <h2 className="text-xl font-bold mb-4">Temple {templeId} Data</h2>
             {/* 🐍 */}
             <p className="mb-2">Chain: Polygon</p>
@@ -110,7 +110,15 @@ const ContractWriteTemple = ({
             {/*<p className="mb-2">Player 1: {shorten(playerAddress)}</p>*/}
             <p className="mb-2">Player 2: Empty Slot</p>
             <p className="mb-2">Duration: 24 Hours MAX</p>
-            <p className="mb-2">Donation: 10 Tokens MIN</p>
+            { templeId === 1 && (
+                <p className="mb-2">Donation: 10 Tokens MIN</p>
+            )}
+            { templeId === 2 && (
+                <p className="mb-2">Donation: 5 Tokens MIN</p>
+            )}
+            { templeId === 3 && (
+                <p className="mb-2">Donation: 0 Tokens MIN</p>
+            )}
             {/*<p className="mb-2">Wallet: {shorten(playerWallet)}</p>*/}
 
             {/*<div className="mb-4">
