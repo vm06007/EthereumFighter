@@ -59,10 +59,10 @@ export default function Home() {
     // Menu items for reference
     const menuItems = [
         'CONNECT WALLET',
-        'LEADER BOARDS',
         'PLAYER 1 VS PLAYER 2',
         'CHARACTER SELECT',
-        'QUICK TEST ROUND'
+        'QUICK TEST ROUND',
+        'LEADER BOARDS'
     ];
 
     // Set up keyboard navigation
@@ -124,13 +124,7 @@ export default function Home() {
                     connectWallet();
                 }
                 break;
-            case 1: // Leader Boards
-                // Navigate to the leaderboards page
-                setTimeout(() => {
-                    router.push('/leaderboards');
-                }, 500);
-                break;
-            case 2: // Player vs Player
+            case 1: // Player vs Player
                 if (isConnected) {
                     if (wallets.length > 1) {
                         // If two wallets are already connected, go directly to game
@@ -153,7 +147,7 @@ export default function Home() {
                     connectWallet();
                 }
                 break;
-            case 3: // Character Select
+            case 2: // Character Select
                 if (isConnected) {
                     // setActionMessage('LOADING CHARACTER SELECT...');
                     setTimeout(() => {
@@ -166,10 +160,16 @@ export default function Home() {
                     }, 1000);
                 }
                 break;
-            case 4: // Quick Mirror Round
+            case 3: // Quick Mirror Round
                 // Navigate directly to the round page
                 setTimeout(() => {
                     router.push('/round');
+                }, 500);
+                break;
+            case 4: // Leader Boards
+                // Navigate to the leaderboards page
+                setTimeout(() => {
+                    router.push('/leaderboards');
                 }, 500);
                 break;
         }
@@ -209,18 +209,10 @@ export default function Home() {
                         {isConnected ? 'Join Online' : 'Connect Wallet'}
                     </a>
                     <a
-                        id="menu-leaderboards"
+                        id="menu-pvp"
                         className={getMenuItemClass(1)}
                         onClick={() => confirmSelection(1)}
                         onMouseEnter={() => handleMouseEnter(1)}
-                    >
-                        Leader Boards
-                    </a>
-                    <a
-                        id="menu-pvp"
-                        className={getMenuItemClass(2)}
-                        onClick={() => confirmSelection(2)}
-                        onMouseEnter={() => handleMouseEnter(2)}
                     >
                         {isConnected ? (
                             <span>
@@ -241,19 +233,27 @@ export default function Home() {
                     </a>
                     <a
                         id="menu-agents"
-                        className={getMenuItemClass(3)}
-                        onClick={() => confirmSelection(3)}
-                        onMouseEnter={() => handleMouseEnter(3)}
+                        className={getMenuItemClass(2)}
+                        onClick={() => confirmSelection(2)}
+                        onMouseEnter={() => handleMouseEnter(2)}
                     >
                         Character Select
                     </a>
                     <a
                         id="menu-quick-round"
+                        className={getMenuItemClass(3)}
+                        onClick={() => confirmSelection(3)}
+                        onMouseEnter={() => handleMouseEnter(3)}
+                    >
+                        Quick Test Round
+                    </a>
+                    <a
+                        id="menu-leaderboards"
                         className={getMenuItemClass(4)}
                         onClick={() => confirmSelection(4)}
                         onMouseEnter={() => handleMouseEnter(4)}
                     >
-                        Quick Test Round
+                        Leader Boards
                     </a>
                 </div>
                 <div className="bottom super-bottom">
