@@ -186,19 +186,19 @@ export default function Home() {
 
         if (match) {
             const currentValue = parseFloat(match[0]);
-            
+
             // Prevent negative values
             const newValue = Math.max(0, currentValue + step);
-            
+
             // Check if we need to maintain specific precision based on token type
-            let formattedNewValue;
-            
+            let formattedNewValue: string | number;
+
             // Determine the token type to apply appropriate formatting
             const isEth = commandText.includes('ETH');
             const isCelo = commandText.includes('CELO');
             const is1Inch = commandText.includes('1INCH');
             const isUsd = commandText.includes('USD');
-            
+
             // Apply appropriate decimal precision based on token
             if (match[0].includes('.')) {
                 // Keep existing decimal precision
@@ -216,10 +216,10 @@ export default function Home() {
                 // Default to whole numbers
                 formattedNewValue = Math.floor(newValue);
             }
-            
+
             // Log the update for debugging
             console.log(`Updating value in "${commandText}" from ${match[0]} to ${formattedNewValue}`);
-            
+
             // Add visual feedback effect - find all value-text elements
             setTimeout(() => {
                 document.querySelectorAll('.value-text').forEach(el => {
@@ -233,7 +233,7 @@ export default function Home() {
                     }
                 });
             }, 50);
-            
+
             return commandText.replace(numberRegex, String(formattedNewValue));
         }
 
@@ -727,7 +727,7 @@ export default function Home() {
                                                 {command.step && selectedSuggestion === index && (
                                                     <div className="flex items-center mr-3">
                                                         {/*<span className="text-xs mr-2">Adjust:</span>*/}
-                                                        <div 
+                                                        <div
                                                             className="gamepad-button-wrapper"
                                                             onClick={(e) => {
                                                                 e.stopPropagation(); // Prevent triggering the parent click handler
@@ -744,7 +744,7 @@ export default function Home() {
                                                         >
                                                             <i className="gamepad-button gamepad-button-playstation gamepad-button-playstation--dpad-left gamepad-button-playstation--variant-ps1 gamepad-button--clickable">←</i>
                                                         </div>
-                                                        <div 
+                                                        <div
                                                             className="gamepad-button-wrapper mx-1"
                                                             onClick={(e) => {
                                                                 e.stopPropagation(); // Prevent triggering the parent click handler
