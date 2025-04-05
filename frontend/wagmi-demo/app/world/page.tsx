@@ -222,20 +222,26 @@ const BridgeModal = ({
     position,
     playerAddress,
     playerWallet,
-    onMint  // Added parameter to receive the mint handler
+    onMint,  // Added parameter to receive the mint handler
+    fetchBalances  // Add function to fetch token balances
 }: {
     isOpen: boolean,
     onClose: () => void,
     position: { x: number, y: number },
     playerAddress: string,
     playerWallet: string,
-    onMint?: () => void  // Optional to keep backward compatibility
+    onMint?: () => void,  // Optional to keep backward compatibility
+    fetchBalances?: () => Promise<void>  // Function to refresh token balances
 }) => {
     if (!isOpen) return null;
 
     // Transaction success handler
     const handleTransactionSuccess = (txHash: string, amount: string) => {
         console.log(`Transaction successful! Hash: ${txHash}, Amount: ${amount}`);
+        // Refresh token balances after successful transaction
+        if (fetchBalances) {
+            fetchBalances();
+        }
         // If there's a global mint handler, also call it
         if (onMint) {
             // onMint();
@@ -312,6 +318,44 @@ export default function WorldPage() {
     const { data: ensName } = useEnsName({ address });
     const { wallets } = useWallets();
     const { setActiveWallet } = useSetActiveWallet();
+
+    // State for token balances
+    const [tokenBalances, setTokenBalances] = useState<{[address: string]: number}>({});
+
+    // Function to fetch token holders and balances
+    const fetchTokenBalances = async () => {
+        try {
+            const response = await fetch(
+                'https://api.metal.build/token/0x18c86ea247c36f534491dcd2b7abea4534cc5c23',
+                {
+                    headers: {
+                        'x-api-key': "36a07914-87d1-5a8b-9e46-f1dbdb03c553",
+                    },
+                }
+            );
+
+            if (response.ok) {
+                const data = await response.json();
+                // Process and map token balances by wallet address
+                const balances: {[address: string]: number} = {};
+
+                // Assuming the API returns an array of holders with their balances
+                // The actual structure will depend on the Metal API response format
+                if (data.holders) {
+                    data.holders.forEach((holder: any) => {
+                        // Convert addresses to lowercase for case-insensitive comparison
+                        balances[holder.address.toLowerCase()] = holder.balance || 0;
+                    });
+                }
+
+                setTokenBalances(balances);
+            } else {
+                console.error('Failed to fetch token balances:', response.statusText);
+            }
+        } catch (error) {
+            console.error('Error fetching token balances:', error);
+        }
+    };
 
     // State for game map
     const [map] = useState(() => generateMap());
@@ -396,6 +440,13 @@ export default function WorldPage() {
             });
         }
     }, [secondWallet, player2EnsName, player2WalletInfo.address]);
+
+    // Fetch token balances when component mounts or wallet addresses change
+    useEffect(() => {
+        if (address || secondWallet?.address) {
+            fetchTokenBalances();
+        }
+    }, [address, secondWallet?.address]);
 
     // Check if a position is next to a temple
     const isNextToTemple = (position: { x: number, y: number }) => {
@@ -753,6 +804,7 @@ export default function WorldPage() {
                             (player2WalletInfo.address || secondWallet?.address || '')
                         }
                         onMint={handleBridgeMint} // Pass the global mint handler
+                        fetchBalances={fetchTokenBalances} // Pass token balance refresh function
                     />
                 </div>
                 {/* Game UI/HUD */}
@@ -796,7 +848,7 @@ export default function WorldPage() {
                                                 style={{ width: '100%' }}></div>
                                         </div>
                                         <div className="mt-2 text-sm">
-                                            Tokens: 5 PT
+                                            Tokens: {tokenBalances[wallet.address.toLowerCase()] || 5} PT
                                         </div>
                                     </div>
                                 );
