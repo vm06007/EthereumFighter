@@ -144,6 +144,14 @@ const ContractWriteTemple = ({
                 <p className="mb-2">Chain: Celo</p>
             )}
 
+            { templeId === 3 && (
+                <p className="mb-2">Chain: Flow</p>
+            )}
+
+            { templeId === 4 && (
+                <p className="mb-2">Chain: Sepolia</p>
+            )}
+
             { templeId === 1 && (
                 <p className="mb-2">Player 1: Empty Slot</p>
             )}
