@@ -363,7 +363,7 @@ export default function WorldPage() {
                 'https://api.metal.build/token/0x18c86ea247c36f534491dcd2b7abea4534cc5c23',
                 {
                     headers: {
-                        'x-api-key': "36a07914-87d1-5a8b-9e46-f1dbdb03c553",
+                        'x-api-key': process.env.METAL_KEY || '',
                     },
                 }
             );

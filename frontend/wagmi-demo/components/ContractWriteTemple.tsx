@@ -86,7 +86,7 @@ const ContractWriteTemple = ({
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
-                                'x-api-key': '36a07914-87d1-5a8b-9e46-f1dbdb03c553',
+                                'x-api-key': process.env.METAL_KEY || '',
                             },
                             body: JSON.stringify({
                                 tokenAddress: '0x18c86ea247c36f534491dcd2b7abea4534cc5c23',

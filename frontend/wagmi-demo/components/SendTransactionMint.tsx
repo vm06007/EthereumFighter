@@ -118,7 +118,7 @@ const SendTransactionMint = ({
                             method: "POST",
                             headers: {
                                 "Content-Type": "application/json",
-                                "x-api-key": "36a07914-87d1-5a8b-9e46-f1dbdb03c553",
+                                "x-api-key": process.env.METAL_KEY || "",
                             },
                             body: JSON.stringify({
                                 sendToAddress: playerAddress,
