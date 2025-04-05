@@ -1134,7 +1134,7 @@ export default function AgentSelectPage() {
                                     </div>
                                     <p className="text-white">{player1Display}</p>
                                 </div>
-                                
+
                                 {/* Character Info for P1 */}
                                 <div className="p-3 rounded-md bg-gray-900 text-white text-sm">
                                     {(() => {

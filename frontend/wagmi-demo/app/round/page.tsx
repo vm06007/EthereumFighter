@@ -14,7 +14,7 @@ export default function Home() {
     const searchParams = useSearchParams();
     const player1Param = searchParams.get('p1') || 'Vitalik Buterin';
     const player2Param = searchParams.get('p2') || 'Vitalik Buterin';
-    
+
     // Get connected account information
     const { address, isConnected } = useAccount();
     // Try to get ENS name for the connected address
@@ -22,7 +22,7 @@ export default function Home() {
 
     // For second player (in a real app, this would come from another connection)
     const [player2Address, setPlayer2Address] = useState<string | null>(null);
-    
+
     // State for player character images
     const [player1Image, setPlayer1Image] = useState<string>('./vitalik.jpg');
     const [player2Image, setPlayer2Image] = useState<string>('./vitalik2.jpg');
@@ -79,29 +79,29 @@ export default function Home() {
     useEffect(() => {
         // Set debug mode
         const DEBUG = true;
-        
+
         // Select the proper Vitalik image for player position (P1 or P2)
         const getVitalikImage = (isPlayer1: boolean): string => {
-            return isPlayer1 ? '/vitalik.jpg' : '/vitalik2.jpg';
+            return isPlayer1 ? '/f/vitalik.jpg' : '/f/vitalik2.jpg';
         };
-        
+
         // Helper function to create image path for a character
         const getCharacterImagePath = (character: string, isPlayer1: boolean): string => {
             if (DEBUG) console.log(`Getting image path for character: "${character}"`);
-            
+
             // For Vitalik Buterin, use the default images based on player position
             if (character === 'Vitalik Buterin') {
                 const vitalikImg = getVitalikImage(isPlayer1);
                 if (DEBUG) console.log(`Using Vitalik image: ${vitalikImg}`);
                 return vitalikImg;
             }
-            
-            // Create image path, preserving original name with spaces
-            const imagePath = `/${character}.avif`;  // IMPORTANT: Removed the dot/period
-            
+
+            // Create image path with /f/ prefix, preserving original name with spaces
+            const imagePath = `/f/${character}.png`;  // Using /f/ folder for round page images
+
             if (DEBUG) {
                 console.log(`Generated character image path: ${imagePath}`);
-                
+
                 // Test if the image exists by creating an Image object (client-side only)
                 if (typeof window !== 'undefined') {
                     const img = new Image();
@@ -110,45 +110,45 @@ export default function Home() {
                     img.src = imagePath;
                 }
             }
-            
+
             return imagePath;
         };
-        
+
         // Set images based on the character names from URL and their player position
         const p1Path = getCharacterImagePath(player1Param, true);
         const p2Path = getCharacterImagePath(player2Param, false);
-        
+
         setPlayer1Image(p1Path);  // true = is Player 1
         setPlayer2Image(p2Path);  // false = is Player 2
-        
+
         console.log(`*** PATHS SET ***`);
         console.log(`P1 Image Path: ${p1Path}`);
         console.log(`P2 Image Path: ${p2Path}`);
     }, [player1Param, player2Param]);
-    
+
     // Effect for simulating loading animation when page first loads
     useEffect(() => {
         // Generate a random address for player 2 right away
-        const randomAddress = `0x${Array.from({length: 40}, () => 
+        const randomAddress = `0x${Array.from({length: 40}, () =>
             Math.floor(Math.random() * 16).toString(16)).join('')}`;
         setPlayer2Address(randomAddress);
-        
+
         // Simulate initial loading delay (5 seconds)
         const loadingTimer = setTimeout(() => {
             setIsPageLoading(false);
-            
+
             // Start the image reveal animation
             let percent = 0;
             const revealInterval = setInterval(() => {
                 percent += 1;
                 setImageRevealPercent(percent);
-                
+
                 // When animation reaches 100%, clear the interval
                 if (percent >= 100) {
                     clearInterval(revealInterval);
                 }
             }, 25); // 25ms per percent = ~2.5 seconds for full reveal
-            
+
         }, 5000);
 
         // Clean up timeout on unmount
