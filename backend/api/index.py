@@ -37,8 +37,33 @@ CORS(app, resources={r"/*/*": {
 
 default_openrouter_ai_model = "google/gemini-2.0-flash-lite-001"
 
-# Token mapping for CoinGecko API IDs
-# consider to use 1inch API service later
+# API Price Source Configuration
+# Set to True to use 1inch API, False to use CoinGecko API
+USE_1INCH_API = True
+
+# Token address mapping for 1inch API (Ethereum mainnet addresses)
+TOKEN_ADDRESS_MAPPING = {
+    "ETH": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",  # Native ETH
+    "WETH": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+    "USDC": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+    "USD": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",  # Using USDC as USD equivalent
+    "USDT": "0xdac17f958d2ee523a2206206994597c13d831ec7",
+    "DAI": "0x6b175474e89094c44da98b954eedeac495271d0f",
+    "WBTC": "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
+    "BTC": "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",  # Using WBTC for BTC
+    "LINK": "0x514910771af9ca656af840dff83e8264ecf986ca",
+    "UNI": "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984",
+    "AAVE": "0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9",
+    "SNX": "0xc011a73ee8576fb46f5e1c5751ca3b9fe0af2a6f",
+    "MKR": "0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2",
+    "COMP": "0xc00e94cb662c3520282e6f5717214004a7f26888",
+    "YFI": "0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e",
+    "SUSHI": "0x6b3595068778dd592e39a122f4f5a5cf09c90fe2",
+    "WISE": "0x66a0f676479cee1d7373f3dc2e2952778bff5bd6",
+    "1INCH": "0x111111111117dc0aa78b770fa6a738034120c302"
+}
+
+# Token mapping for CoinGecko API IDs (kept for reference only)
 TOKEN_ID_MAPPING = {
     "ETH": "ethereum",
     "WETH": "weth",
@@ -59,11 +84,11 @@ TOKEN_ID_MAPPING = {
     "WISE": "wise-token"
 }
 
-async def get_token_price(token_symbol):
+async def get_token_price_from_coingecko(token_symbol):
     """Get token price in USD from CoinGecko API"""
     token_id = TOKEN_ID_MAPPING.get(token_symbol.upper())
     if not token_id:
-        logging.warning(f"No mapping found for token symbol: {token_symbol}")
+        logging.warning(f"No CoinGecko mapping found for token symbol: {token_symbol}")
         return None
 
     url = f"https://api.coingecko.com/api/v3/simple/price?ids={token_id}&vs_currencies=usd"
@@ -81,16 +106,225 @@ async def get_token_price(token_symbol):
                     data = await response.json()
                     if token_id in data and 'usd' in data[token_id]:
                         return data[token_id]['usd']
-                logging.warning(f"Failed to get price for {token_symbol}: {await response.text()}")
+                logging.warning(f"CoinGecko: Failed to get price for {token_symbol}: {await response.text()}")
                 return None
     except Exception as e:
-        logging.error(f"Error fetching price for {token_symbol}: {str(e)}")
+        logging.error(f"CoinGecko: Error fetching price for {token_symbol}: {str(e)}")
         return None
+
+async def get_token_price_from_1inch(token_symbol):
+    """Get token price in USD from 1inch API"""
+    token_address = TOKEN_ADDRESS_MAPPING.get(token_symbol.upper())
+    if not token_address:
+        logging.warning(f"No 1inch address mapping found for token symbol: {token_symbol}")
+        return None
+
+    # 1inch API for Ethereum mainnet (chain ID 1)
+    url = "https://api.1inch.dev/price/v1.1/1"
+
+    # Using the get_prices_for_addresses approach for a single token
+    specific_url = f"{url}/{token_address}"
+
+    try:
+        # Create SSL context with certifi certificates
+        ssl_context = ssl.create_default_context(cafile=certifi.where())
+
+        # Create connector with the SSL context
+        connector = aiohttp.TCPConnector(ssl=ssl_context)
+
+        # Use the connector in the ClientSession
+        async with aiohttp.ClientSession(connector=connector) as session:
+            # Get your API key from environment variables for better security
+            api_key = os.getenv("ONEINCH_API_KEY", "jnSBv4cJLnFd4BtiSrxosxaFdasKTMV8")
+
+            async with session.get(specific_url, headers={'Authorization': f'Bearer {api_key}'}) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    # 1inch API returns price directly for the token address
+                    if token_address in data:
+                        return float(data[token_address])
+                    else:
+                        logging.warning(f"1inch: Token address {token_address} not found in response: {data}")
+                        return None
+                else:
+                    logging.warning(f"1inch: Failed to get price for {token_symbol}: {await response.text()}")
+
+                    # Fallback to the POST method if GET fails
+                    payload = {
+                        "tokens": [token_address]
+                    }
+
+                    async with session.post(url, headers={'Authorization': f'Bearer {api_key}'}, json=payload) as post_response:
+                        if post_response.status == 200:
+                            data = await post_response.json()
+                            if token_address in data:
+                                return float(data[token_address])
+                        logging.warning(f"1inch: Fallback request failed for {token_symbol}: {await post_response.text()}")
+                        return None
+    except Exception as e:
+        logging.error(f"1inch: Error fetching price for {token_symbol}: {str(e)}")
+        return None
+
+async def get_token_price(token_symbol):
+    """Get token price in USD from the configured API source (1inch or CoinGecko)"""
+    if USE_1INCH_API:
+        price = await get_token_price_from_1inch(token_symbol)
+        if price is not None:
+            return price
+        # Fallback to CoinGecko if 1inch fails and we have a mapping
+        if token_symbol.upper() in TOKEN_ID_MAPPING:
+            logging.info(f"Falling back to CoinGecko for {token_symbol} after 1inch failure")
+            return await get_token_price_from_coingecko(token_symbol)
+        return None
+    else:
+        price = await get_token_price_from_coingecko(token_symbol)
+        if price is not None:
+            return price
+        # Fallback to 1inch if CoinGecko fails and we have a mapping
+        if token_symbol.upper() in TOKEN_ADDRESS_MAPPING:
+            logging.info(f"Falling back to 1inch for {token_symbol} after CoinGecko failure")
+            return await get_token_price_from_1inch(token_symbol)
+        return None
+
+async def get_multiple_token_prices_from_coingecko(token_symbols):
+    """Get prices for multiple tokens at once using CoinGecko API"""
+    # Map symbols to CoinGecko IDs
+    token_ids = []
+    symbol_to_id_map = {}
+
+    for symbol in token_symbols:
+        token_id = TOKEN_ID_MAPPING.get(symbol.upper())
+        if token_id:
+            token_ids.append(token_id)
+            symbol_to_id_map[token_id] = symbol.upper()
+        else:
+            logging.warning(f"CoinGecko: No mapping found for token symbol: {symbol}")
+
+    if not token_ids:
+        return {}
+
+    # CoinGecko API allows fetching multiple tokens in one request
+    url = f"https://api.coingecko.com/api/v3/simple/price?ids={','.join(token_ids)}&vs_currencies=usd"
+
+    try:
+        # Create SSL context with certifi certificates
+        ssl_context = ssl.create_default_context(cafile=certifi.where())
+        connector = aiohttp.TCPConnector(ssl=ssl_context)
+
+        async with aiohttp.ClientSession(connector=connector) as session:
+            async with session.get(url) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    # Map the CoinGecko IDs back to symbols
+                    return {symbol_to_id_map[token_id]: data[token_id]['usd'] for token_id in data if token_id in symbol_to_id_map and 'usd' in data[token_id]}
+                else:
+                    logging.warning(f"CoinGecko: Failed to get prices: {await response.text()}")
+                    return {}
+    except Exception as e:
+        logging.error(f"CoinGecko: Error fetching prices: {str(e)}")
+        return {}
+
+async def get_multiple_token_prices_from_1inch(token_symbols):
+    """Get prices for multiple tokens at once using 1inch API"""
+    # Convert token symbols to addresses
+    token_addresses = []
+    symbol_to_address_map = {}
+
+    for symbol in token_symbols:
+        address = TOKEN_ADDRESS_MAPPING.get(symbol.upper())
+        if address:
+            token_addresses.append(address)
+            symbol_to_address_map[address] = symbol.upper()
+        else:
+            logging.warning(f"1inch: No address mapping found for token symbol: {symbol}")
+
+    if not token_addresses:
+        return {}
+
+    # 1inch API for Ethereum mainnet (chain ID 1)
+    url = "https://api.1inch.dev/price/v1.1/1"
+
+    try:
+        # Create SSL context with certifi certificates
+        ssl_context = ssl.create_default_context(cafile=certifi.where())
+        connector = aiohttp.TCPConnector(ssl=ssl_context)
+
+        async with aiohttp.ClientSession(connector=connector) as session:
+            api_key = os.getenv("ONEINCH_API_KEY", "jnSBv4cJLnFd4BtiSrxosxaFdasKTMV8")
+
+            if len(token_addresses) == 1:
+                # For a single token, use the GET endpoint
+                specific_url = f"{url}/{token_addresses[0]}"
+                async with session.get(specific_url, headers={'Authorization': f'Bearer {api_key}'}) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        return {symbol_to_address_map[addr]: float(price) for addr, price in data.items() if addr in symbol_to_address_map}
+            else:
+                # For multiple tokens, use the POST endpoint
+                payload = {
+                    "tokens": token_addresses
+                }
+
+                async with session.post(url, headers={'Authorization': f'Bearer {api_key}'}, json=payload) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        # Convert addresses back to symbols in the result
+                        return {symbol_to_address_map[addr]: float(price) for addr, price in data.items() if addr in symbol_to_address_map}
+                    else:
+                        logging.warning(f"1inch: Failed to get prices: {await response.text()}")
+
+            # If we get here, both methods failed or returned no data
+            return {}
+    except Exception as e:
+        logging.error(f"1inch: Error fetching prices: {str(e)}")
+        return {}
+
+async def get_multiple_token_prices(token_symbols):
+    """Get prices for multiple tokens using the configured API source (1inch or CoinGecko)"""
+    if USE_1INCH_API:
+        prices = await get_multiple_token_prices_from_1inch(token_symbols)
+
+        # If some tokens don't have prices from 1inch, try to get them from CoinGecko
+        missing_tokens = [symbol for symbol in token_symbols if symbol.upper() not in prices]
+        if missing_tokens:
+            # Only try CoinGecko for tokens that have a CoinGecko mapping
+            coingecko_tokens = [t for t in missing_tokens if t.upper() in TOKEN_ID_MAPPING]
+            if coingecko_tokens:
+                logging.info(f"Falling back to CoinGecko for {len(coingecko_tokens)} tokens after 1inch failure")
+                cg_prices = await get_multiple_token_prices_from_coingecko(coingecko_tokens)
+                # Merge the prices
+                prices.update(cg_prices)
+
+        return prices
+    else:
+        prices = await get_multiple_token_prices_from_coingecko(token_symbols)
+
+        # If some tokens don't have prices from CoinGecko, try to get them from 1inch
+        missing_tokens = [symbol for symbol in token_symbols if symbol.upper() not in prices]
+        if missing_tokens:
+            # Only try 1inch for tokens that have a 1inch mapping
+            inch_tokens = [t for t in missing_tokens if t.upper() in TOKEN_ADDRESS_MAPPING]
+            if inch_tokens:
+                logging.info(f"Falling back to 1inch for {len(inch_tokens)} tokens after CoinGecko failure")
+                inch_prices = await get_multiple_token_prices_from_1inch(inch_tokens)
+                # Merge the prices
+                prices.update(inch_prices)
+
+        return prices
 
 async def calculate_token_rate(from_token, to_token, from_amount=1.0):
     """Calculate the exchange rate between two tokens"""
-    from_price = await get_token_price(from_token)
-    to_price = await get_token_price(to_token)
+    # Get prices for both tokens at once for efficiency
+    prices = await get_multiple_token_prices([from_token, to_token])
+
+    from_price = prices.get(from_token.upper())
+    to_price = prices.get(to_token.upper())
+
+    # Fallback to individual queries if bulk request failed
+    if from_price is None:
+        from_price = await get_token_price(from_token)
+    if to_price is None:
+        to_price = await get_token_price(to_token)
 
     if from_price is None or to_price is None:
         return None
@@ -286,6 +520,62 @@ def ask_ai_post():
     response = asyncio.run(crypto_assistant.ask_ai(question, model))
 
     return jsonify({"response": response})
+
+@app.route("/token_price/<token_symbol>", methods=["GET"])
+def get_token_price_route(token_symbol):
+    """Route to get the current price of a token using the configured price API"""
+    api_source = "1inch" if USE_1INCH_API else "CoinGecko"
+    price = asyncio.run(get_token_price(token_symbol))
+    if price is not None:
+        return jsonify({
+            "token": token_symbol.upper(),
+            "price_usd": price,
+            "source": api_source
+        })
+    else:
+        return jsonify({"error": f"Unable to fetch price for {token_symbol}"}), 404
+
+@app.route("/token_prices", methods=["GET", "POST"])
+def get_token_prices_route():
+    """Route to get the current prices of multiple tokens using the configured price API"""
+    api_source = "1inch" if USE_1INCH_API else "CoinGecko"
+
+    if request.method == "POST":
+        data = request.get_json() or {}
+        token_symbols = data.get("tokens", [])
+    else:
+        token_symbols = request.args.get("tokens", "").split(",")
+        token_symbols = [symbol.strip() for symbol in token_symbols if symbol.strip()]
+
+    if not token_symbols:
+        return jsonify({"error": "No tokens specified"}), 400
+
+    prices = asyncio.run(get_multiple_token_prices(token_symbols))
+    if prices:
+        return jsonify({
+            "prices": prices,
+            "source": api_source
+        })
+    else:
+        return jsonify({"error": "Unable to fetch prices for the specified tokens"}), 404
+
+@app.route("/api_source", methods=["GET", "POST"])
+def api_source_route():
+    """Route to get or set the current API source (1inch or CoinGecko)"""
+    global USE_1INCH_API
+
+    if request.method == "POST":
+        data = request.get_json() or {}
+        new_source = data.get("use_1inch", None)
+
+        if new_source is not None:
+            USE_1INCH_API = bool(new_source)
+            logging.info(f"API source changed to {'1inch' if USE_1INCH_API else 'CoinGecko'}")
+
+    return jsonify({
+        "use_1inch": USE_1INCH_API,
+        "current_source": "1inch" if USE_1INCH_API else "CoinGecko"
+    })
 
 if __name__ == "__main__":
     app.run()
