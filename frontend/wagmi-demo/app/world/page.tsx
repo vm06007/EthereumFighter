@@ -353,8 +353,71 @@ export default function WorldPage() {
     const { wallets } = useWallets();
     const { setActiveWallet } = useSetActiveWallet();
 
-    // State for token balances
+    // State for token balances and exchange quote
     const [tokenBalances, setTokenBalances] = useState<{[address: string]: number}>({});
+    const [exchangeQuote, setExchangeQuote] = useState<any>(null);
+    const [isLoadingQuote, setIsLoadingQuote] = useState<boolean>(false);
+
+    // Function to fetch exchange quote from our backend
+    const fetchExchangeQuote = async () => {
+        setIsLoadingQuote(true);
+        try {
+            // Make a request to our backend to get a real-time 1inch quote
+            // Our backend handles the API calls and price conversions
+            const apiUrl = 'http://localhost:5000/get_exchange_quote?from_token=1INCH&to_token=ETH&from_amount=10';
+            console.log("Fetching 1inch quote from:", apiUrl);
+
+            const response = await fetch(apiUrl);
+
+            if (response.ok) {
+                const data = await response.json();
+                setExchangeQuote(data);
+                console.log("Exchange quote received:", data);
+            } else {
+                console.error("Failed to fetch exchange quote:", response.statusText);
+                // Set fallback values if API fails with more accurate pricing
+                /*setExchangeQuote({
+                    from: {
+                        token: "1INCH",
+                        amount: 10,
+                        value_usd: 1.83, // Current value for 10 1INCH tokens
+                        price_usd: 0.183 // Current price per 1INCH token
+                    },
+                    to: {
+                        token: "ETH",
+                        amount: 0.00071, // Approx conversion at current rates ~$1.83 worth of ETH
+                        value_usd: 1.67, // Slightly less due to exchange fees
+                        price_usd: 2358  // Current ETH price
+                    },
+                    exchange_rate: 0.000071, // Rate of 1INCH to ETH
+                    network_fee_usd: 0.16    // Reduced fee proportional to the value
+                });
+                */
+            }
+        } catch (error) {
+            console.error("Error fetching exchange quote:", error);
+            // Set fallback values if API fails with more accurate pricing
+            /*setExchangeQuote({
+                from: {
+                    token: "1INCH",
+                    amount: 10,
+                    value_usd: 1.83, // Current value for 10 1INCH tokens
+                    price_usd: 0.183 // Current price per 1INCH token
+                },
+                to: {
+                    token: "ETH",
+                    amount: 0.00071, // Approx conversion at current rates ~$1.83 worth of ETH
+                    value_usd: 1.67, // Slightly less due to exchange fees
+                    price_usd: 2358  // Current ETH price
+                },
+                exchange_rate: 0.000071, // Rate of 1INCH to ETH
+                network_fee_usd: 0.16    // Reduced fee proportional to the value
+            });
+            */
+        } finally {
+            setIsLoadingQuote(false);
+        }
+    };
 
     // Function to fetch token holders and balances
     const fetchTokenBalances = async () => {
@@ -407,6 +470,7 @@ export default function WorldPage() {
     // Modal state
     const [modalOpen, setModalOpen] = useState(false);
     const [bridgeModalOpen, setBridgeModalOpen] = useState(false);
+    const [swapModalOpen, setSwapModalOpen] = useState(false);
     const [modalPosition, setModalPosition] = useState({ x: 0, y: 0 });
     const [activePlayerNumber, setActivePlayerNumber] = useState<1 | 2>(1);
     const [templeId, setTempleId] = useState(1);
@@ -481,6 +545,13 @@ export default function WorldPage() {
             fetchTokenBalances();
         }
     }, [address, secondWallet?.address]);
+
+    // Fetch exchange quote when swap modal is opened
+    useEffect(() => {
+        if (swapModalOpen && !exchangeQuote) {
+            fetchExchangeQuote();
+        }
+    }, [swapModalOpen, exchangeQuote]);
 
     // Check if a position is next to a temple
     const isNextToTemple = (position: { x: number, y: number }) => {
@@ -654,7 +725,7 @@ export default function WorldPage() {
             keyState.current[event.code] = true;
 
             // Modal interactions have priority
-            if (modalOpen || bridgeModalOpen) {
+            if (modalOpen || bridgeModalOpen || swapModalOpen) {
                 switch (event.key) {
                     case 'Enter':
                     case ' ': // Space key
@@ -700,10 +771,12 @@ export default function WorldPage() {
                     case 'Escape':
                         setModalOpen(false);
                         setBridgeModalOpen(false);
+                        setSwapModalOpen(false);
                         break;
                     case 'q':
                             setModalOpen(false);
                             setBridgeModalOpen(false);
+                            setSwapModalOpen(false);
                             break;
                 }
                 return; // Exit early for modal interactions
@@ -734,6 +807,7 @@ export default function WorldPage() {
                 case 'Escape':
                     setModalOpen(false);
                     setBridgeModalOpen(false);
+                    setSwapModalOpen(false);
                     break;
             }
 
@@ -779,7 +853,7 @@ export default function WorldPage() {
             window.removeEventListener('keydown', handleKeyDown);
             window.removeEventListener('keyup', handleKeyUp);
         };
-    }, [player1Position, player2Position, hasTwoWallets, map, modalOpen, bridgeModalOpen, handleBridgeMint]);
+    }, [player1Position, player2Position, hasTwoWallets, map, modalOpen, bridgeModalOpen, swapModalOpen, handleBridgeMint]);
 
     return (
         <>
@@ -858,6 +932,100 @@ export default function WorldPage() {
                         onMint={handleBridgeMint} // Pass the global mint handler
                         fetchBalances={fetchTokenBalances} // Pass token balance refresh function
                     />
+
+                    {/* 1inch Swap Modal */}
+                    {swapModalOpen && (
+                        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-80 z-50">
+                            <div className="bg-white rounded-lg max-w-md w-full p-6">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h2 className="text-xl font-bold text-gray-800">Bridge with 1inch Fusion+</h2>
+                                    <button
+                                        onClick={() => setSwapModalOpen(false)}
+                                        className="text-gray-500 hover:text-gray-700"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+
+                                {isLoadingQuote ? (
+                                    <div className="py-8 text-center">
+                                        <p className="text-gray-600 mb-2">Fetching best swap rate with 1inch fusion+...</p>
+                                        <div className="loader mx-auto h-8 w-8 border-4 border-t-blue-500 border-r-transparent border-b-blue-500 border-l-transparent rounded-full animate-spin"></div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="mb-4">
+                                            <div className="bg-gray-100 p-4 rounded-lg mb-4">
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <span className="text-gray-700">From: Celo</span>
+                                                    <img src="https://cryptologos.cc/logos/1inch-1inch-logo.png" alt="1INCH" className="h-6 w-6" />
+                                                </div>
+                                                <div className="flex justify-between items-center">
+                                                    <span className="font-bold text-lg">
+                                                        {exchangeQuote?.from.amount || 10} {exchangeQuote?.from.token || '1INCH'}
+                                                    </span>
+                                                    <span className="text-gray-500">
+                                                        ≈ ${typeof exchangeQuote?.from.value_usd === 'number' ?
+                                                            Number(exchangeQuote.from.value_usd).toFixed(2) : '1.83'}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <div className="bg-gray-100 p-4 rounded-lg">
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <span className="text-gray-700">To: Base</span>
+                                                    <img src="https://cryptologos.cc/logos/ethereum-eth-logo.svg" alt="ETH" className="h-6 w-6" />
+                                                </div>
+                                                <div className="flex justify-between items-center">
+                                                    <span className="font-bold text-lg">
+                                                        {typeof exchangeQuote?.to.amount === 'number' ?
+                                                            Number(exchangeQuote.to.amount).toFixed(6) : '0.00071'} {exchangeQuote?.to.token || 'ETH'}
+                                                    </span>
+                                                    {/*<span className="text-gray-500">
+                                                        ≈ ${typeof exchangeQuote?.to.value_usd === 'number' ?
+                                                            exchangeQuote.to.value_usd.toFixed(2) : '1.67'}
+                                                    </span>*/}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex flex-col gap-2 text-sm text-gray-600 mb-4">
+                                            <div className="flex justify-between">
+                                                <span>Exchange Rate:</span>
+                                                <span>
+                                                    1 {exchangeQuote?.from.token || '1INCH'} ≈ {typeof exchangeQuote?.exchange_rate === 'number' ?
+                                                        exchangeQuote.exchange_rate.toFixed(6) : '0.000071'} {exchangeQuote?.to.token || 'ETH'}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span>Network Fee:</span>
+                                                <span>${typeof exchangeQuote?.network_fee_usd === 'number' ?
+                                                    Number(exchangeQuote.network_fee_usd).toFixed(2) : '0.16'}</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex gap-3">
+                                            <button
+                                                onClick={() => setSwapModalOpen(false)}
+                                                className="w-1/2 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    alert("This would execute the cross-chain swap via 1inch Fusion+");
+                                                    setSwapModalOpen(false);
+                                                }}
+                                                className="w-1/2 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                                            >
+                                                Confirm Swap
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    )}
                 </div>
                 {/* Game UI/HUD */}
                 <div className="game-hud" style={{
@@ -919,14 +1087,14 @@ export default function WorldPage() {
                             )}
                         </div>
                     </div>
-                    {/* Bottom mapper that shows only when near water */}
-                    {showBottomMapper && (
+                    {/* Bottom mapper that shows only when near water and modal is not open */}
+                    {showBottomMapper && !swapModalOpen && (
                         <div className="bottom-mapper text-center text-xs bg-black bg-opacity-70 p-1 rounded">
                             {/*<p>Player 1: Arrow Keys | Player 2: WASD</p>*/}
                             <p>The Bridge is not build yet - use 1INCH Fusion+</p>
                             <button
-                                className="bb-button  mt-1 bg-gray-700 p-1 rounded"
-                                onClick={() => router.push('/')}
+                                className="bb-button mt-1 bg-gray-700 p-1 rounded"
+                                onClick={() => setSwapModalOpen(true)}
                             >
                                 Bridge My ETH Now!
                             </button>
