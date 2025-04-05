@@ -186,10 +186,15 @@ export default function AgentSelectPage() {
         }
     };
 
-    // Play sound helper function
+    // Play sound helper function for navigation/selection
     const playSoundSelect = () => {
         try {
-            // s.play();
+            // Play a short beep sound when moving between characters
+            const beep = new Audio('audio/beep-move.mp3');
+            beep.volume = 0.3; // Lower volume for navigation sounds
+            beep.play().catch(err => {
+                console.error("Error playing navigation sound:", err);
+            });
         } catch (err) {
             console.error("Error playing sound:", err);
         }
@@ -197,11 +202,38 @@ export default function AgentSelectPage() {
 
     const playSoundPlayer = (character: any) => {
         try {
-            const p = new Audio(`audio/${character.name}.mp3`);
-            p.volume = 0.8
-            p.play();
+            // Skip the "Add Your Agent" option or any character without a name
+            if (!character.name || character.name === "Add Your Agent") {
+                console.log("Skipping audio for placeholder character");
+                return;
+            }
+            
+            const audioPath = `audio/${character.name}.mp3`;
+            console.log(`Playing sound: ${audioPath}`);
+            
+            const p = new Audio(audioPath);
+            p.volume = 0.8;
+            
+            // Add event listeners for better error handling
+            p.addEventListener('error', (e) => {
+                console.error(`Error loading audio file ${audioPath}:`, e);
+            });
+            
+            p.addEventListener('canplaythrough', () => {
+                console.log(`Successfully loaded audio: ${audioPath}`);
+            });
+            
+            // Play the sound
+            const playPromise = p.play();
+            
+            // Handle promise rejection (modern browsers return a promise from play())
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    console.error(`Error playing audio: ${error}`);
+                });
+            }
         } catch (err) {
-            console.error("Error playing sound:", err);
+            console.error("Error playing character sound:", err);
         }
     };
 
