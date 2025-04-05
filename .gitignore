@@ -137,3 +137,4 @@ dist
 frontend/wagmi-demo/next-env.d.ts
 
 __pycache__/
+frontend/fhevm-next-template-main/next-env.d.ts
