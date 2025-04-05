@@ -392,6 +392,18 @@ export default function WorldPage() {
     const player2Display = player2WalletInfo.ensName || (secondWallet ?
         (player2EnsName || shorten(secondWallet.address)) : 'Player 2');
 
+    // Check if a position is on or next to water
+    const isNearWater = (position: { x: number, y: number }) => {
+        const { x, y } = position;
+        // Check current position and adjacent positions
+        const positions = [
+            [x, y], [x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]
+        ];
+        return positions.some(([px, py]) =>
+            map[py] && map[py][px] === 4
+        );
+    };
+
     // Redirect if not connected
     useEffect(() => {
         if (!isConnected) {
@@ -538,7 +550,6 @@ export default function WorldPage() {
                             tile > 0 ? <Tile key={`${x}-${y}`} type={tile} x={x} y={y} /> : null
                         )
                     )}
-
                     {/* Render player 1 */}
                     <Character
                         position={player1Position}
@@ -546,7 +557,6 @@ export default function WorldPage() {
                         frame={player1Frame}
                         direction={player1Direction}
                     />
-
                     {/* Render player 2 if two wallets are connected */}
                     {hasTwoWallets && (
                         <Character
@@ -556,7 +566,6 @@ export default function WorldPage() {
                             direction={player2Direction}
                         />
                     )}
-
                     {/* Temple modal */}
                     <TempleModal
                         isOpen={modalOpen}
@@ -569,7 +578,6 @@ export default function WorldPage() {
                         }
                         templeId={templeId}
                     />
-
                     {/* Bridge modal */}
                     <BridgeModal
                         isOpen={bridgeModalOpen}
@@ -583,7 +591,6 @@ export default function WorldPage() {
                         onMint={handleBridgeMint} // Pass the global mint handler
                     />
                 </div>
-
                 {/* Game UI/HUD */}
                 <div className="game-hud" style={{
                     position: 'fixed',
@@ -630,7 +637,6 @@ export default function WorldPage() {
                                     </div>
                                 );
                             })}
-
                             {/* Show placeholder for Player 2 if no second wallet */}
                             {wallets.length === 1 && (
                                 <div className="wallet-card p-2 rounded-lg bg-blue-900 bg-opacity-80">
