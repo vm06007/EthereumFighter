@@ -1,12 +1,13 @@
 'use client';
 
 import { useAccount, useEnsName } from 'wagmi';
-import { usePrivy, useWallets } from '@privy-io/react-auth';
+import { useWallets } from '@privy-io/react-auth';
 import { useSetActiveWallet } from '@privy-io/wagmi';
 import { shorten } from 'lib/utils';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useRef } from 'react';
 import { characters } from './characters';
+import './styles.css';
 
 type PlayerState = {
     focusIndex: number;
@@ -18,8 +19,9 @@ type PlayerState = {
 const CharacterInfoPanel = ({ character, player }: {character: any, player: any}) => {
     if (!character) return <div className="character-info-empty">Select a character</div>;
 
-    const playerColor = player === 'p1' ? 'red' : 'blue';
-    const baseColor = player === 'p1' ? 'rgba(227, 35, 30, 0.7)' : 'rgba(30, 104, 227, 0.7)';
+    const baseColor = player === 'p1'
+        ? 'rgba(227, 35, 30, 0.7)'
+        : 'rgba(30, 104, 227, 0.7)';
 
     return (
         <div className={`character-info-panel ${player}`} style={{ color: 'white' }}>
@@ -101,7 +103,9 @@ export default function AgentSelectPage() {
     const hasTwoWallets = wallets.length > 1;
 
     // Find the second wallet (the one that's not active)
-    const secondWallet = wallets.find(wallet => wallet.address !== address);
+    const secondWallet = wallets.find((wallet) => {
+        return wallet.address !== address
+    });
 
     // Player wallets display
     const player1Display = address ? (ensName || shorten(address)) : 'Player 1';
@@ -139,11 +143,15 @@ export default function AgentSelectPage() {
     const [showStartModal, setShowStartModal] = useState(false);
     const [selectedCharacters, setSelectedCharacters] = useState({ p1: '', p2: '' });
 
-    // Initialize audio on component mount
+    // Key state tracking
+    const keyState = useRef<Record<string, boolean>>({});
+
+
+    // Watch for both players confirming and start 2-second window
     useEffect(() => {
-        if (typeof window !== 'undefined') {
-            selectSoundRef.current = new Audio('audio/beep-move.mp3');
-            confirmSoundRef.current = new Audio('audio/beep-move.mp3');
+        // Only trigger when both players have confirmed and no countdown is running
+        if (state.p1.confirmed && state.p2.confirmed && !state.finalCountdown && !state.selectionFinal) {
+            console.log("BOTH PLAYERS CONFIRMED - WAITING BEFORE TRIGGERING 2-SECOND WINDOW");
 
             if (selectSoundRef.current) selectSoundRef.current.volume = 0.3;
             if (confirmSoundRef.current) confirmSoundRef.current.volume = 0.4;
@@ -190,6 +198,55 @@ export default function AgentSelectPage() {
         if (selectedElement) {
             selectedElement.classList.add(`focus-${player}`);
         }
+
+        // Play sound effect
+        playSoundSelect();
+    };
+
+    // Move player focus
+    const movePlayer = (player: 'p1' | 'p2', direction: 'up' | 'down' | 'left' | 'right') => {
+        // Calculate grid position
+        const row = Math.floor(state[player].focusIndex / gridCols);
+        const col = state[player].focusIndex % gridCols;
+
+        let newRow = row;
+        let newCol = col;
+
+        // Update position based on direction
+        switch (direction) {
+            case 'up':
+                newRow = (row - 1 + gridRows) % gridRows;
+                break;
+            case 'down':
+                newRow = (row + 1) % gridRows;
+                break;
+            case 'left':
+                newCol = (col - 1 + gridCols) % gridCols;
+                break;
+            case 'right':
+                newCol = (col + 1) % gridCols;
+                break;
+        }
+
+        let newIndex = newRow * gridCols + newCol;
+
+        // Ensure index is within range
+        if (newIndex >= characters.length) {
+            newIndex = (newRow * gridCols) + (characters.length % gridCols) - 1;
+            if (newIndex < 0) newIndex = characters.length - 1;
+        }
+
+        // Update state
+        setState(prev => ({
+            ...prev,
+            [player]: {
+                ...prev[player],
+                focusIndex: newIndex
+            }
+        }));
+
+        // Update focus
+        updateFocus(player);
     };
 
     // Confirm character selection
