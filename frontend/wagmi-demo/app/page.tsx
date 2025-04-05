@@ -77,7 +77,7 @@ export default function Home() {
                         navSound.volume = 0.2; // Lower volume for navigation
                         navSound.play().catch(() => {});
                     } catch (err) {}
-                    
+
                     setCurrentIndex(prevIndex =>
                         (prevIndex - 1 + menuItems.length) % menuItems.length
                     );
@@ -91,7 +91,7 @@ export default function Home() {
                         navSound.volume = 0.2; // Lower volume for navigation
                         navSound.play().catch(() => {});
                     } catch (err) {}
-                    
+
                     setCurrentIndex(prevIndex =>
                         (prevIndex + 1) % menuItems.length
                     );
@@ -119,7 +119,7 @@ export default function Home() {
         e.preventDefault(); // Prevent the default link behavior
         setIsMainVisible(prev => !prev);
     };
-    
+
     // Vibrate controller function
     const vibrateController = () => {
         if (typeof navigator !== 'undefined' && navigator.getGamepads) {
@@ -163,17 +163,22 @@ export default function Home() {
         // Play sound and vibrate controller for feedback
         playMenuSelectSound();
         vibrateController();
-        
+
         console.log("CONFIRMED:", selectedItem);
 
         // Set action message based on selection
         switch (index) {
             case 0: // Connect Wallet or Start Game
                 if (isConnected) {
+                    // "Join Online" option - ensure vibration happens with stronger feedback
+                    vibrateController(); // Extra vibration for emphasis
+                    vibrateController(); // Extra vibration for emphasis
+
                     setTimeout(() => {
                         router.push('/world');
                     }, 500);
                 } else {
+                    // "Connect Wallet" option
                     connectWallet();
                 }
                 break;
@@ -241,18 +246,18 @@ export default function Home() {
             hoverSound.play().catch(err => {});
         } catch (err) {}
     };
-    
+
     // Handle mouse hover
     const handleMouseEnter = (index: number) => {
         if (currentIndex !== index) {
             // Play hover sound when changing menu items
             playHoverSound();
-            
+
             // Gentle controller vibration on hover
             if (typeof navigator !== 'undefined' && navigator.getGamepads) {
                 const gamepads = navigator.getGamepads();
                 const gamepad = Array.from(gamepads).find(gp => gp !== null);
-                
+
                 if (gamepad && gamepad.vibrationActuator && 'playEffect' in gamepad.vibrationActuator) {
                     gamepad.vibrationActuator.playEffect('dual-rumble', {
                         startDelay: 0,
@@ -262,7 +267,7 @@ export default function Home() {
                     });
                 }
             }
-            
+
             setCurrentIndex(index);
         }
     };
