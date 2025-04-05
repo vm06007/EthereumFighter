@@ -8,6 +8,8 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, useRef } from 'react';
 import { characters } from './characters';
 
+type PlayerState = {
+    focusIndex: number;
 export default function AgentSelectPage() {
     // Router for navigation
     const router = useRouter();
@@ -38,12 +40,12 @@ export default function AgentSelectPage() {
             focusIndex: 0,
             confirmed: false,
             selecting: true
-        } as any,
+        } as PlayerState,
         p2: {
             focusIndex: hasTwoWallets ? 8 : 0,  // Start P2 at a different position
             confirmed: false,
             selecting: hasTwoWallets
-        } as any,
+        } as PlayerState,
         finalCountdown: null as NodeJS.Timeout | null,
         selectionFinal: false
     });
