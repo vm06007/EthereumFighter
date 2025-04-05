@@ -135,20 +135,23 @@ export default function Home() {
 
         // Simulate initial loading delay (5 seconds)
         const loadingTimer = setTimeout(() => {
-            setIsPageLoading(false);
-
+            // Don't hide the loading overlay yet
+            // We'll hide it after the image is fully revealed
+            
             // Start the image reveal animation
             let percent = 0;
             const revealInterval = setInterval(() => {
                 percent += 1;
                 setImageRevealPercent(percent);
-
-                // When animation reaches 100%, clear the interval
+                
+                // When animation reaches 100%, clear the interval and hide loading screen
                 if (percent >= 100) {
                     clearInterval(revealInterval);
+                    // Only set isPageLoading to false after the reveal is complete
+                    setIsPageLoading(false);
                 }
             }, 25); // 25ms per percent = ~2.5 seconds for full reveal
-
+            
         }, 5000);
 
         // Clean up timeout on unmount
@@ -577,14 +580,14 @@ export default function Home() {
                 <div
                     ref={chatWindowRef}
                     style={{
-                        background: isPageLoading ? "none" : `url("${player1Image}")`,
+                        background: `url("${player1Image}")`,
                         backgroundSize: "cover",
                         backgroundPosition: "center top",
                         position: "relative",
-                        backgroundColor: isPageLoading ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0.25)",
+                        backgroundColor: "rgba(0,0,0,0.25)",
                         backgroundRepeat: "no-repeat",
-                        // Add reveal animation clipping when not loading
-                        clipPath: !isPageLoading ? `inset(0 0 ${100 - imageRevealPercent}% 0)` : "none",
+                        // Add reveal animation clipping
+                        clipPath: `inset(0 0 ${100 - imageRevealPercent}% 0)`,
                         transition: "clip-path 0.3s ease-out",
                         minHeight: "500px" // Ensure there's enough height to see the image
                     }}
@@ -803,13 +806,13 @@ export default function Home() {
                 </div>
                 <div
                     style={{
-                        background: isPageLoading ? "none" : `url("${player2Image}")`,
-                        backgroundColor: isPageLoading ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0.25)",
+                        background: `url("${player2Image}")`,
+                        backgroundColor: "rgba(0,0,0,0.25)",
                         backgroundSize: "cover",
                         backgroundPosition: "center top",
                         backgroundRepeat: "no-repeat",
-                        // Add reveal animation clipping when not loading
-                        clipPath: !isPageLoading ? `inset(0 0 ${100 - imageRevealPercent}% 0)` : "none",
+                        // Add reveal animation clipping
+                        clipPath: `inset(0 0 ${100 - imageRevealPercent}% 0)`,
                         transition: "clip-path 0.3s ease-out",
                         minHeight: "500px" // Ensure there's enough height to see the image
                     }}
