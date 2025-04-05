@@ -153,15 +153,25 @@ export default function AgentSelectPage() {
         if (state.p1.confirmed && state.p2.confirmed && !state.finalCountdown && !state.selectionFinal) {
             console.log("BOTH PLAYERS CONFIRMED - WAITING BEFORE TRIGGERING 2-SECOND WINDOW");
 
-            if (selectSoundRef.current) selectSoundRef.current.volume = 0.3;
-            if (confirmSoundRef.current) confirmSoundRef.current.volume = 0.4;
+            // Add a delay to allow the second player's selection animation to complete
+            // This gives time to see the flash animation before the countdown starts
+            setTimeout(() => {
+                if (state.p1.confirmed && state.p2.confirmed && !state.finalCountdown && !state.selectionFinal) {
+                    console.log("STARTING COUNTDOWN AFTER DELAY");
+                    // checkBothConfirmed();
+                }
+            }, 800); // 800ms delay before starting the countdown
         }
+    }, [state.p1.confirmed, state.p2.confirmed, state.finalCountdown, state.selectionFinal]);
 
-        // Redirect if not connected
-        if (!isConnected) {
-            router.push('/');
+    // Play sound helper function
+    const playSoundSelect = () => {
+        try {
+            s.play();
+        } catch (err) {
+            console.error("Error playing sound:", err);
         }
-    }, [isConnected, router]);
+    };
 
     const playSoundPlayer = (character: any) => {
         try {
@@ -403,6 +413,107 @@ export default function AgentSelectPage() {
         // Play sound to indicate cancellation
         // playSound(selectSoundRef.current);
     };
+
+    // Finalize characters selection
+    const finalizeSelection = (p1Char: string, p2Char: string) => {
+        // Get the character display names for status updates
+        const p1CharObj = characters.find(c => c.name === p1Char);
+        const p2CharObj = characters.find(c => c.name === p2Char);
+
+        // Update status text to show locked selections
+        /*
+        const p1Status = document.querySelector('.player-status.p1');
+        const p2Status = document.querySelector('.player-status.p2');
+
+        if (p1Status && p1CharObj) {
+            p1Status.textContent = `P1: ${p1CharObj.displayName} (Locked)`;
+        }
+        if (p2Status && p2CharObj) {
+            p2Status.textContent = `(Locked) ${p2CharObj.displayName} :P2`;
+        }
+        */
+
+        // Play sound for final selection
+        // playSound(confirmSoundRef.current);
+        // vibrateController();
+
+        // Show ready message with animation
+        const readyMessage = document.querySelector('.ready-message') as any;
+        // const resetButton = document.querySelector('.reset-button') as any;
+
+        if (readyMessage) {
+            console.log("Showing READY message");
+            // Apply animation for the READY message
+            readyMessage.style.animation = 'pulse 1s infinite';
+            readyMessage.classList.remove('hidden');
+            readyMessage.style.display = 'block';
+
+            // Start with scaled down and invisible
+            readyMessage.style.transform = 'scale(0.5)';
+            readyMessage.style.opacity = '0';
+
+            // Then animate it in with a bounce effect
+            setTimeout(() => {
+                readyMessage.style.transition = 'all 0.5s ease-out';
+                readyMessage.style.transform = 'scale(1.2)';
+                readyMessage.style.opacity = '1';
+
+                // Play a sound for the READY announcement
+                // playSound(confirmSoundRef.current);
+
+                // Then scale it back to normal
+                setTimeout(() => {
+                    readyMessage.style.transform = 'scale(1)';
+                }, 200);
+            }, 100);
+        }
+
+        // Show only the RESET button
+        /*if (resetButton) {
+            console.log("Showing RESET button");
+
+            // Show the reset button
+            resetButton.classList.remove('hidden');
+
+            // Make the button visible but start with it hidden
+            resetButton.style.display = 'block';
+            resetButton.style.opacity = '0';
+            resetButton.style.transform = 'translateY(20px)';
+
+            // Fade in the button after the READY message
+            setTimeout(() => {
+                resetButton.style.transition = 'all 0.3s ease-out';
+                resetButton.style.opacity = '1';
+                resetButton.style.transform = 'translateY(0)';
+            }, 600);
+        }*/
+
+        setState(prev => ({
+            ...prev,
+            selectionFinal: true
+        }));
+
+        setSelectedCharacters({
+            p1: p1Char,
+            p2: p2Char
+        });
+
+        // Flash all characters briefly to highlight the selection
+        const characterElements = document.querySelectorAll('.character') as any;
+        characterElements.forEach((char: any) => {
+            char.style.transition = 'all 0.3s ease';
+            char.style.filter = 'brightness(1.5)';
+            setTimeout(() => {
+                char.style.filter = '';
+            }, 500);
+        });
+
+        // Show modal for game start after a suitable delay
+        setTimeout(() => {
+            setShowStartModal(true);
+        }, 1000);
+    };
+
     // Reset game selections
     const resetGame = () => {
         // Clear all selections and states
