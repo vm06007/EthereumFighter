@@ -189,6 +189,7 @@ export default function AgentSelectPage() {
     // Play sound helper function
     const playSoundSelect = () => {
         try {
+            // s.play();
         } catch (err) {
             console.error("Error playing sound:", err);
         }
