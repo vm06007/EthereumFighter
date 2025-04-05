@@ -13,6 +13,17 @@ const generateMap = () => {
 
     const map = Array(80).fill(0).map(() => Array(80).fill(0));
     // Wall
+
+
+    // Add some rivers (4) and bridges (5)
+    for (let i = 10; i < 50; i++) {
+        map[i][77] = 4; // River
+    }
+
+    for (let i = 10; i < 50; i++) {
+        map[50][i] = 4; // River
+    }
+
     // Add Metal Stone Bridge
     map[15][45] = 5;
     map[30][45] = 5;
