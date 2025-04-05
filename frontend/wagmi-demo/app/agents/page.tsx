@@ -207,25 +207,25 @@ export default function AgentSelectPage() {
                 console.log("Skipping audio for placeholder character");
                 return;
             }
-            
+
             const audioPath = `audio/${character.name}.mp3`;
             console.log(`Playing sound: ${audioPath}`);
-            
+
             const p = new Audio(audioPath);
             p.volume = 0.8;
-            
+
             // Add event listeners for better error handling
             p.addEventListener('error', (e) => {
                 console.error(`Error loading audio file ${audioPath}:`, e);
             });
-            
+
             p.addEventListener('canplaythrough', () => {
                 console.log(`Successfully loaded audio: ${audioPath}`);
             });
-            
+
             // Play the sound
             const playPromise = p.play();
-            
+
             // Handle promise rejection (modern browsers return a promise from play())
             if (playPromise !== undefined) {
                 playPromise.catch(error => {
@@ -769,7 +769,7 @@ export default function AgentSelectPage() {
     // Start game with selected characters
     const startGame = () => {
         // Navigate to the world page with selected characters as query params
-        router.push(`/round?p1=${encodeURIComponent(selectedCharacters.p1)}&p2=${encodeURIComponent(selectedCharacters.p2)}`);
+        router.push(`/round?p1=${encodeURIComponent(selectedCharacters.p2)}&p2=${encodeURIComponent(selectedCharacters.p1)}`);
     };
 
 

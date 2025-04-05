@@ -31,3 +31,23 @@ body {
     text-wrap: balance;
   }
 }
+
+/* Animation for value changes */
+@keyframes valueChanged {
+  0% {
+    color: inherit;
+    text-shadow: none;
+  }
+  50% {
+    color: yellow;
+    text-shadow: 0 0 8px rgba(255, 255, 0, 0.8);
+  }
+  100% {
+    color: inherit;
+    text-shadow: none;
+  }
+}
+
+.value-changed {
+  animation: valueChanged 0.3s ease-in-out;
+}
