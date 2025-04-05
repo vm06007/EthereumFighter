@@ -11,3 +11,8 @@
 - Verified at:
         Sourcify
         Etherscan
+
+- EtherumFighterPlainMode game : 0x6B6Ec78Db692C01a0235f27b1144e74664F0AA85
+- Verified at:
+        Sourcify
+        Etherscan
