@@ -71,6 +71,13 @@ export default function Home() {
             switch (e.key) {
                 case 'ArrowUp':
                     e.preventDefault();
+                    // Play a soft navigation sound
+                    try {
+                        const navSound = new Audio('/audio/beep-move.mp3');
+                        navSound.volume = 0.2; // Lower volume for navigation
+                        navSound.play().catch(() => {});
+                    } catch (err) {}
+                    
                     setCurrentIndex(prevIndex =>
                         (prevIndex - 1 + menuItems.length) % menuItems.length
                     );
@@ -78,6 +85,13 @@ export default function Home() {
 
                 case 'ArrowDown':
                     e.preventDefault();
+                    // Play a soft navigation sound
+                    try {
+                        const navSound = new Audio('/audio/beep-move.mp3');
+                        navSound.volume = 0.2; // Lower volume for navigation
+                        navSound.play().catch(() => {});
+                    } catch (err) {}
+                    
                     setCurrentIndex(prevIndex =>
                         (prevIndex + 1) % menuItems.length
                     );
@@ -105,12 +119,51 @@ export default function Home() {
         e.preventDefault(); // Prevent the default link behavior
         setIsMainVisible(prev => !prev);
     };
+    
+    // Vibrate controller function
+    const vibrateController = () => {
+        if (typeof navigator !== 'undefined' && navigator.getGamepads) {
+            const gamepads = navigator.getGamepads();
+            const gamepad = Array.from(gamepads).find(gp => gp !== null);
+
+            if (!gamepad) {
+                console.log("No gamepad detected");
+                return;
+            }
+
+            if (gamepad.vibrationActuator && 'playEffect' in gamepad.vibrationActuator) {
+                gamepad.vibrationActuator.playEffect('dual-rumble', {
+                    startDelay: 0,
+                    duration: 500,
+                    weakMagnitude: 1.0,
+                    strongMagnitude: 1.0
+                });
+            }
+        }
+    };
+
+    // Play sound helper function for menu selection
+    const playMenuSelectSound = () => {
+        try {
+            // Play a selection sound
+            const selectionSound = new Audio('/audio/beep-move.mp3');
+            selectionSound.volume = 0.5;
+            selectionSound.play().catch(err => {
+                console.error("Error playing menu select sound:", err);
+            });
+        } catch (err) {
+            console.error("Error playing sound:", err);
+        }
+    };
 
     // Handle menu item selection
     const confirmSelection = (index: number) => {
         const selectedItem = menuItems[index];
 
-
+        // Play sound and vibrate controller for feedback
+        playMenuSelectSound();
+        vibrateController();
+        
         console.log("CONFIRMED:", selectedItem);
 
         // Set action message based on selection
@@ -180,9 +233,36 @@ export default function Home() {
         return `menu-item ${currentIndex === index ? 'active' : ''}`;
     };
 
+    // Play hover sound (quieter than selection)
+    const playHoverSound = () => {
+        try {
+            const hoverSound = new Audio('/audio/beep-move.mp3');
+            hoverSound.volume = 0.15; // Very quiet for hover
+            hoverSound.play().catch(err => {});
+        } catch (err) {}
+    };
+    
     // Handle mouse hover
     const handleMouseEnter = (index: number) => {
         if (currentIndex !== index) {
+            // Play hover sound when changing menu items
+            playHoverSound();
+            
+            // Gentle controller vibration on hover
+            if (typeof navigator !== 'undefined' && navigator.getGamepads) {
+                const gamepads = navigator.getGamepads();
+                const gamepad = Array.from(gamepads).find(gp => gp !== null);
+                
+                if (gamepad && gamepad.vibrationActuator && 'playEffect' in gamepad.vibrationActuator) {
+                    gamepad.vibrationActuator.playEffect('dual-rumble', {
+                        startDelay: 0,
+                        duration: 50, // Very short
+                        weakMagnitude: 0.2, // Very gentle
+                        strongMagnitude: 0.1
+                    });
+                }
+            }
+            
             setCurrentIndex(index);
         }
     };
