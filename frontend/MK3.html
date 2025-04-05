@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mortal Kombat 3 - Character Select</title>
+    <style>
+        body {
+            background-color: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: white;
+            font-family: Arial, sans-serif;
+            flex-direction: column;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            width: 80%;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .asterisk {
+            color: green;
+            font-size: 24px;
+            margin-left: 10px;
+        }
+        .vs-container {
+            display: none;
+            font-size: 40px;
+            color: green;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        .character-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 150px);
+            grid-template-rows: repeat(4, 150px);
+            gap: 10px;
+            position: relative;
+            outline: none;
+        }
+        .character {
+            width: 150px;
+            height: 150px;
+            background-size: cover;
+            border: 2px solid gray;
+        }
+        .selected-p1:not(.confirmed-p1) {
+            border: 3px solid red !important;
+            animation: flash 0.5s infinite alternate;
+        }
+        .selected-p2:not(.confirmed-p2) {
+            border: 3px solid blue !important;
+            animation: flash 0.5s infinite alternate;
+        }
+        .confirmed-p1, .confirmed-p2 {
+            animation: none !important;
+        }
+        .confirmed-p1 {
+            border: 4px solid red !important;
+            background-color: rgba(255, 0, 0, 0.4) !important;
+            animation: none !important;
+        }
+        .confirmed-p2 {
+            border: 4px solid blue !important;
+            background-color: rgba(0, 0, 255, 0.4) !important;
+            animation: none !important;
+        }
+        .reset-button {
+            display: none;
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        @keyframes flash {
+            from { transform: scale(1); }
+            to { transform: scale(1.2); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div id="player1-label">Player 1: <span id="p1-name">character1</span><span id="p1-asterisk" class="asterisk" style="display: none;">*</span></div>
+        <div id="player2-label">Player 2: <span id="p2-name">character2</span><span id="p2-asterisk" class="asterisk" style="display: none;">*</span></div>
+    </div>
+    <div class="character-grid" id="characterGrid" tabindex="0"></div>
+    <div id="vs-text" class="vs-container">VS</div>
+    <button id="reset-button" class="reset-button">Reset</button>
+
+    <script>
+
+        const chars = [
+            'Vitalik Buterin', 'Gavin Wood', 'Michael Saylor', 'Charles Hopkins', 'Roger Ver',
+            'Jihan Wu', 'Justin Sun', 'Pavel Durov', 'Faketoshi', 'Andreas',
+            'Changpeng Zhao', 'Arthur Heiz', 'Elizabeth Warren', 'Donald Trump', 'character15',
+            'character16', 'character17', 'character18', 'character19', 'character20'
+        ]
+
+        const characters = [...Array(20).keys()].map(i => chars[i]);
+        const cols = 5;
+        let p1Index = 0, p2Index = 1;
+        let p1Confirmed = false, p2Confirmed = false;
+        let finalSelectionTimeout;
+        let selectionFinalized = false;
+
+        const characterGrid = document.getElementById('characterGrid');
+        const p1Name = document.getElementById('p1-name');
+        const p2Name = document.getElementById('p2-name');
+        const p1Asterisk = document.getElementById('p1-asterisk');
+        const p2Asterisk = document.getElementById('p2-asterisk');
+        const vsText = document.getElementById('vs-text');
+        const resetButton = document.getElementById('reset-button');
+
+        characters.forEach((char, index) => {
+            const div = document.createElement('div');
+            div.classList.add('character');
+            div.style.backgroundImage = `url('images/${char}.avif')`;
+            div.style.backgroundPosition = `top`;
+            characterGrid.appendChild(div);
+        });
+
+        const characterElements = document.querySelectorAll('.character');
+        characterElements[p1Index].classList.add('selected-p1');
+        characterElements[p2Index].classList.add('selected-p2');
+
+        document.addEventListener('keydown', (event) => {
+            if (selectionFinalized) return;
+
+            if (!p1Confirmed) {
+                characterElements[p1Index].classList.remove('selected-p1');
+                if (event.key === 'ArrowRight') p1Index = (p1Index + 1) % characters.length;
+                if (event.key === 'ArrowLeft') p1Index = (p1Index - 1 + characters.length) % characters.length;
+                if (event.key === 'ArrowDown') p1Index = (p1Index + cols) % characters.length;
+                if (event.key === 'ArrowUp') p1Index = (p1Index - cols + characters.length) % characters.length;
+                characterElements[p1Index].classList.add('selected-p1');
+                p1Name.textContent = characters[p1Index];
+            }
+            if (!p2Confirmed) {
+                characterElements[p2Index].classList.remove('selected-p2');
+                if (event.key === 'd') p2Index = (p2Index + 1) % characters.length;
+                if (event.key === 'a') p2Index = (p2Index - 1 + characters.length) % characters.length;
+                if (event.key === 's') p2Index = (p2Index + cols) % characters.length;
+                if (event.key === 'w') p2Index = (p2Index - cols + characters.length) % characters.length;
+                characterElements[p2Index].classList.add('selected-p2');
+                p2Name.textContent = characters[p2Index];
+            }
+
+            if (event.key === 'Enter' && !p1Confirmed) {
+                p1Confirmed = true;
+                p1Asterisk.style.display = 'inline';
+                characterElements[p1Index].classList.add('confirmed-p1'); // ✅ Apply the class
+                characterElements[p1Index].classList.remove('selected-p1'); // ✅ Remove selection animation
+            }
+            if (event.key === ' ' && !p2Confirmed) {
+                p2Confirmed = true;
+                p2Asterisk.style.display = 'inline';
+                characterElements[p2Index].classList.add('confirmed-p2'); // ✅ Apply the class
+                characterElements[p2Index].classList.remove('selected-p2'); // ✅ Remove selection animation
+            }
+
+            if (event.key === 'Backspace' && p1Confirmed) {
+                p1Confirmed = false;
+                p1Asterisk.style.display = 'none';
+                characterElements[p1Index].classList.remove('confirmed-p1'); // ✅ Remove confirmed class
+                characterElements[p1Index].classList.add('selected-p1'); // ✅ Restore selection animation
+                clearTimeout(finalSelectionTimeout);
+            }
+            if (event.key === 'Escape' && p2Confirmed) {
+                p2Confirmed = false;
+                p2Asterisk.style.display = 'none';
+                characterElements[p2Index].classList.remove('confirmed-p2'); // ✅ Remove confirmed class
+                characterElements[p2Index].classList.add('selected-p2'); // ✅ Restore selection animation
+                clearTimeout(finalSelectionTimeout);
+            }
+
+            if (p1Confirmed && p2Confirmed && !selectionFinalized) {
+                vsText.style.display = 'block';
+                finalSelectionTimeout = setTimeout(() => {
+                    selectionFinalized = true;
+                    resetButton.style.display = 'block';
+                }, 2000);
+            }
+        });
+        resetButton.addEventListener('click', () => location.reload());
+    </script>
+</body>
+</html>

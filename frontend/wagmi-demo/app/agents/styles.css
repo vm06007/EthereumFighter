@@ -1,0 +1,128 @@
+.container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background-image: url(world-0.jpg);
+    width: 900px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: auto;
+    background-color: #000000;
+    background-size: contain;
+    width: 900px;
+    height: 100vh;
+}
+
+.inner {
+    backdrop-filter: brightness(0.2) blur(1px);
+    height: 100%;
+    width: 900px;
+}
+
+.title {
+    text-align: center;
+    text-transform: uppercase;
+    color: #dac751;
+    letter-spacing: 0.1em;
+    text-shadow: 0px 2px 2px rgba(255, 255, 255, 0.6);
+}
+
+.select-container {
+    max-width: 860px;
+    display: flex;
+    margin: 1em auto 3em;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    background: rgba(255, 255, 255, 0.5);
+    padding: 4px 4px 0px;
+}
+
+.character {
+    margin-bottom: 4px;
+    width: auto;
+    max-height: 120px;
+    align-self: stretch;
+    background: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    position: relative;
+    text-align: center;
+}
+
+.img-container {
+    position: relative;
+    width: 100px;
+    height: 120px;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+}
+
+.character__name {
+    position: absolute;
+    width: 100%;
+    bottom: 0;
+    display: none;
+}
+
+.character__img,
+.character__name {
+    margin: 0;
+    padding: 0;
+}
+
+.character__img {
+    filter: grayscale(0.84);
+    height: 120px;
+}
+
+/* Focus styles for Player 1 */
+.character.focus-p1 {
+    transform: scale(1.05);
+    box-shadow: 0px 0px 10px 2px rgba(227, 35, 30, 0.7);
+    z-index: 50;
+}
+
+.list-footer .heart {
+    color: tomato;
+    font-size: 2em;
+    vertical-align: middle;
+}
+
+.status-display {
+    text-align: center;
+    color: white;
+    font-size: 1.5em;
+    margin: 1em auto;
+    max-width: 860px;
+    font-weight: 700;
+    text-shadow: 0px 0px 5px rgba(0, 0, 0, 0.7);
+}
+
+.player-status {
+    display: inline-block;
+    padding: 0.5em 1em;
+    margin: 0 1em;
+    border-radius: 5px;
+}
+
+.player-status.p1 {
+    background-color: rgba(227, 35, 30, 0.7);
+    font-size: 12px;
+}
+
+.player-status.p2 {
+    background-color: rgba(30, 104, 227, 0.7);
+    font-size: 12px;
+}
+
+.ready-message {
+    display: none;
+    color: #dac751;
+    font-size: 2em;
+    text-shadow: 0 0 10px white;
+    animation: pulse 1s infinite;
+    margin: 0.5em auto;
+}

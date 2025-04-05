@@ -1,7 +1,7 @@
 body {
     color: white;
     background-color: black;
-    background: url(default.jpg);
+    background: url(./default.jpg);
     font-family: "Press Start 2P", monospace;
     font-size: 1rem;
     text-align: center;
@@ -127,6 +127,7 @@ h1 {
     display: flex;
     height: 10vh;
     justify-content: space-around;
+    align-items: end;
 }
 
 .credit {
