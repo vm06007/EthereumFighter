@@ -6,7 +6,7 @@ import { useSetActiveWallet } from "@privy-io/wagmi";
 import { shorten } from "lib/utils";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
-// import ContractWriteTemple from '../../components/ContractWriteTemple';
+import ContractWriteTemple from '../../components/ContractWriteTemple';
 // import SendTransactionMint from '../../components/SendTransactionMint';
 
 // Generate a 80x80 map filled with 0s
@@ -215,7 +215,7 @@ const TempleModal = ({
                 borderRadius: '5px',
                 boxShadow: '0 0 10px rgba(0, 0, 0, 0.5)',
                 zIndex: 20,
-                minWidth: '350px'
+                minWidth: '300px'
             }}
         >
             <ContractWriteTemple
@@ -291,17 +291,6 @@ const BridgeModal = ({
                 </div>
 
                 {/* SendTransactionMint component instead of buttons */}
-                <div id="bridge-mint-button">
-                    {/*<SendTransactionMint
-                        to="0x641AD78BAca220C5BD28b51Ce8e0F495e85Fe689"
-                        amount="0.01"
-                        // warning="We recommend doing this on a testnet (Sepolia)."
-                        buttonText="Mint"
-                        onSuccess={handleTransactionSuccess}
-                        onClose={onClose}
-                        playerAddress={playerWallet}
-                    />*/}
-                </div>
 
                 <div className="mt-4 text-center">
                     <button
