@@ -631,5 +631,122 @@ def api_source_route():
         "current_source": "1inch" if USE_1INCH_API else "CoinGecko"
     })
 
+@app.route("/get_exchange_quote", methods=["GET"])
+def get_exchange_quote():
+    """Get a real exchange quote directly from 1inch API"""
+    from_token = request.args.get("from_token", "1INCH")
+    to_token = request.args.get("to_token", "ETH")
+    from_amount = float(request.args.get("from_amount", "10"))
+
+    # Get real token addresses for 1inch API
+    from_token_address = TOKEN_ADDRESS_MAPPING.get(from_token.upper())
+    to_token_address = TOKEN_ADDRESS_MAPPING.get(to_token.upper())
+
+    if not from_token_address or not to_token_address:
+        return jsonify({"error": f"Token address not found for {from_token} or {to_token}"}), 400
+
+    # Convert amount to wei (1inch API expects amount in wei)
+    # For 1INCH token with 18 decimals
+    decimals = 18  # Most ERC20 tokens use 18 decimals
+    amount_in_wei = int(from_amount * (10 ** decimals))
+
+    # Directly query 1inch swap API for a real quote
+    try:
+        # Use 1inch Swap API to get a quote
+        # We'll use Ethereum mainnet (chain ID 1)
+        result = asyncio.run(get_1inch_quote(
+            from_token_address,
+            to_token_address,
+            amount_in_wei
+        ))
+
+        if result and "toAmount" in result:
+            # Convert the result amount from wei to ETH (decimal)
+            to_amount = float(result["toAmount"]) / (10 ** decimals)
+
+            # Calculate exchange rate per token
+            exchange_rate = to_amount / from_amount
+
+            # Get token prices for USD values
+            from_price_usd = asyncio.run(get_token_price(from_token))
+            to_price_usd = asyncio.run(get_token_price(to_token))
+
+            # Calculate USD values
+            from_value_usd = from_price_usd * from_amount if from_price_usd else None
+            to_value_usd = to_price_usd * to_amount if to_price_usd else None
+
+            # Get estimated gas fee
+            estimated_gas = int(result.get("estimatedGas", 200000))
+            gas_price_wei = 30000000000  # 30 gwei as default
+
+            # Calculate network fee in ETH
+            network_fee_eth = (estimated_gas * gas_price_wei) / 1e18
+            # Convert to USD
+            network_fee_usd = network_fee_eth * to_price_usd if to_price_usd else 0.16
+
+            logging.info(f"1inch quote: {from_amount} {from_token} = {to_amount} {to_token}")
+            return jsonify({
+                "from": {
+                    "token": from_token.upper(),
+                    "amount": from_amount,
+                    "value_usd": from_value_usd,
+                    "price_usd": from_price_usd
+                },
+                "to": {
+                    "token": to_token.upper(),
+                    "amount": to_amount,
+                    "value_usd": to_value_usd,
+                    "price_usd": to_price_usd
+                },
+                "exchange_rate": exchange_rate,
+                "network_fee_usd": network_fee_usd,
+                "timestamp": datetime.now().isoformat(),
+                # Include raw 1inch response for reference
+                "raw_response": result
+            })
+        else:
+            logging.error(f"Invalid response from 1inch API: {result}")
+            return jsonify({"error": "Failed to get quote from 1inch API"}), 500
+    except Exception as e:
+        logging.error(f"Error getting 1inch quote: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+async def get_1inch_quote(from_token_address, to_token_address, amount_in_wei):
+    """Get an actual swap quote from 1inch API"""
+    # 1inch Swap API endpoint for quotes
+    url = "https://api.1inch.dev/swap/v5.2/1/quote"
+
+    # Get your API key from environment variables
+    api_key = os.getenv("ONEINCH_API_KEY", "")
+
+    params = {
+        "src": from_token_address,
+        "dst": to_token_address,
+        "amount": str(amount_in_wei),
+        "includeTokensInfo": "true",
+        "includeProtocols": "true"
+    }
+
+    try:
+        # Create SSL context with certifi certificates
+        ssl_context = ssl.create_default_context(cafile=certifi.where())
+        connector = aiohttp.TCPConnector(ssl=ssl_context)
+
+        async with aiohttp.ClientSession(connector=connector) as session:
+            async with session.get(url, headers={
+                'Authorization': f'Bearer {api_key}',
+                'Accept': 'application/json'
+            }, params=params) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    return data
+                else:
+                    error_text = await response.text()
+                    logging.error(f"1inch API error: {response.status} - {error_text}")
+                    return None
+    except Exception as e:
+        logging.error(f"Error in 1inch API request: {str(e)}")
+        return None
+
 if __name__ == "__main__":
     app.run()
