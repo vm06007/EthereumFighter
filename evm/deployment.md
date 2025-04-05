@@ -6,6 +6,12 @@
         Blockscout
         Routescan
 - EtherumFighter Blind game : 0x2c6E6D10f1a56Ad3bba99dBA49567F5911CB95e2
+- Verified at:
+        Sourcify
+        Blockscout
+        Routescan
+
+
 ## Celo mainnet deployment 
 - ForgeToken : 0xe652aD467100c6C62856DC663b59C6ad4e3F60A8
 - Verified at:
