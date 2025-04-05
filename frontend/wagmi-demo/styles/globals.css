@@ -279,3 +279,10 @@ h1 {
         margin-top: 0;
     }
 }
+
+.bottom-mapper {
+    position: absolute;
+    width: 100%;
+    top: 100vh;
+    left: 0px;
+}
