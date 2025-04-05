@@ -135,7 +135,15 @@ const ContractWriteTemple = ({
         <div className="temple-interaction bg-white p-0 rounded-lg max-w-md mx-auto text-black">
             <h2 className="text-xl font-bold mb-4">Temple {templeId} Data</h2>
             {/* 🐍 */}
-            <p className="mb-2">Chain: Polygon</p>
+
+            { templeId === 1 && (
+                <p className="mb-2">Chain: Polygon</p>
+            )}
+
+            { templeId === 2 && (
+                <p className="mb-2">Chain: Celo</p>
+            )}
+
             { templeId === 1 && (
                 <p className="mb-2">Player 1: Empty Slot</p>
             )}

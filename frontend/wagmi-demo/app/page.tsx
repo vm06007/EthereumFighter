@@ -65,7 +65,6 @@ export default function Home() {
         'LEADER BOARDS'
     ];
 
-    // Set up keyboard navigation
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             switch (e.key) {
@@ -159,10 +158,14 @@ export default function Home() {
     // Handle menu item selection
     const confirmSelection = (index: number) => {
         const selectedItem = menuItems[index];
-
-        // Play sound and vibrate controller for feedback
+        
+        // Only play the standard sound for other menu items - vibration will be handled individually
         playMenuSelectSound();
-        vibrateController();
+        
+        // Only vibrate for items other than "Join Online" - it gets special handling
+        if (!(index === 0 && isConnected)) {
+            vibrateController();
+        }
 
         console.log("CONFIRMED:", selectedItem);
 
@@ -171,8 +174,21 @@ export default function Home() {
             case 0: // Connect Wallet or Start Game
                 if (isConnected) {
                     // "Join Online" option - ensure vibration happens with stronger feedback
-                    vibrateController(); // Extra vibration for emphasis
-                    vibrateController(); // Extra vibration for emphasis
+                    // Custom stronger vibration specifically for Join Online
+                    if (typeof navigator !== 'undefined' && navigator.getGamepads) {
+                        const gamepads = navigator.getGamepads();
+                        const gamepad = Array.from(gamepads).find(gp => gp !== null);
+
+                        if (gamepad && gamepad.vibrationActuator && 'playEffect' in gamepad.vibrationActuator) {
+                            // Stronger, longer vibration for Join Online
+                            gamepad.vibrationActuator.playEffect('dual-rumble', {
+                                startDelay: 0,
+                                duration: 800, // Longer duration
+                                weakMagnitude: 1.0,
+                                strongMagnitude: 1.0
+                            });
+                        }
+                    }
 
                     setTimeout(() => {
                         router.push('/world');
