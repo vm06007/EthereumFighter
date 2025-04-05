@@ -1104,6 +1104,8 @@ export default function AgentSelectPage() {
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
 
             {/* Modal for starting the game */}
             {showStartModal && (
