@@ -97,7 +97,7 @@ contract EtherumFighterPlainMode  {
         if (_gameRules.gameStakingAmount == 0) revert InvalidAmount();
         if (_gameRules.rewardAmount == 0) revert InvalidAmount();
         if (_gameRules.gameDuration == 0) revert InvalidDuration();
-        if (_gameRules.assets.length == 0 || _gameRules.assets.length != _gameRules.assetAmounts.length) revert InvalidArrayLength();
+        if (_gameRules.assets.length != _gameRules.assetAmounts.length) revert InvalidArrayLength();
         if (_oracleExpirationThreshold == 0) revert InvalidDuration();
         
         // Initialize contract state
