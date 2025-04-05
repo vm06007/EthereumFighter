@@ -43,7 +43,10 @@ This revolutionary approach allows for true strategy-based competition without i
 |-------|-----------------|---------|
 | Sepolia | `0x98b65ab65f908Ca25F3D4c793Af55C3386178E5b` | Main gameplay and tournament contracts |
 | Polygon | `0x9D12F8A512875807EF836F8207497d68201C3D5c` | High-frequency trading matches with lower gas fees |
-| Celo | `0xE43a21Ee76b591Fc4B41Fc4a397e58E8127bC353` | Mobile-friendly gameplay with carbon-neutral footprint |
+| Celo | `0x6B6Ec78Db692C01a0235f27b1144e74664F0AA85` | Mobile-friendly gameplay with carbon-neutral footprint |
+
+CELO:
+https://repo.sourcify.dev/42220/0x6B6Ec78Db692C01a0235f27b1144e74664F0AA85
 
 Our architecture leverages each chain's unique strengths while maintaining cross-chain asset compatibility through secure bridge mechanics.
 
