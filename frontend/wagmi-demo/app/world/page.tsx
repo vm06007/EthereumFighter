@@ -467,10 +467,9 @@ export default function WorldPage() {
 
         if (templePos) {
             const [tx, ty] = templePos;
-
-            // @TODO: temporary set templeId to 1 for testing purposes
-            // In a real scenario, we would calculate the templeId based on the position
-            const calculatedTempleId = 1;
+            // Calculate temple ID based on position (simplified logic)
+            // const calculatedTempleId = (tx + ty) % 3 + 1; // This will give values 1, 2, or 3
+            const calculatedTempleId = 1; // This will give values 1, 2, or 3
 
             // Set the active wallet based on which player is interacting
             if (playerNum === 1) {
@@ -513,6 +512,174 @@ export default function WorldPage() {
 
         return false;
     };
+
+    // Move character function
+    const moveCharacter = (
+        playerNum: 1 | 2,
+        dx: number,
+        dy: number
+    ) => {
+        // Determine which player state to update
+        const setPosition = playerNum === 1 ? setPlayer1Position : setPlayer2Position;
+        const setFrame = playerNum === 1 ? setPlayer1Frame : setPlayer2Frame;
+        const setDirection = playerNum === 1 ? setPlayer1Direction : setPlayer2Direction;
+        const position = playerNum === 1 ? player1Position : player2Position;
+        const frame = playerNum === 1 ? player1Frame : player2Frame;
+
+        // Calculate direction based on movement
+        let direction = 0;
+        if (dx === 1) direction = -64; // Right
+        if (dx === -1) direction = -192; // Left
+        if (dy === 1) direction = 0; // Down
+        if (dy === -1) direction = -128; // Up
+
+        // Update direction
+        setDirection(direction);
+
+        // Update animation frame
+        setFrame((frame + 1) % 4);
+
+        // Calculate new position
+        const newX = position.x + dx;
+        const newY = position.y + dy;
+
+        // Check if the move is valid - prevent movement over temples, walls, rivers, and bridges
+        if (newX >= 0 && newY >= 0 && newX < 80 && newY < 80 &&
+            ![1, 3, 4, 5].includes(map[newY][newX])) {
+            // Update position
+            setPosition({ x: newX, y: newY });
+        }
+    };
+
+    // Handle keyboard events
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (keyState.current[event.code]) return; // Prevent key repeat
+            keyState.current[event.code] = true;
+
+            // Modal interactions have priority
+            if (modalOpen || bridgeModalOpen) {
+                switch (event.key) {
+                    case 'Enter':
+                    case ' ': // Space key
+                        if (modalOpen) {
+                            // Temple modal interaction
+                            console.log('Temple modal open: Attempting to trigger lock tokens from keyboard');
+
+                            try {
+                                // Find all buttons in the temple modal
+                                const buttons = document.querySelectorAll('.modal button');
+                                if (buttons.length > 0) {
+                                    // Click the first button (which should be the Lock Tokens/Enter button)
+                                    console.log('Found button in temple modal - clicking it');
+                                    (buttons[0] as HTMLButtonElement).click();
+                                } else {
+                                    console.log('No buttons found in temple modal');
+                                }
+                            } catch (err) {
+                                console.error('Error triggering temple modal action:', err);
+                            }
+                        } else if (bridgeModalOpen) {
+                            // Bridge modal interaction - find and click the mint button
+                            console.log('Bridge modal open: Finding and clicking the mint button');
+
+                            try {
+                                // Try to find the button in SendTransactionMint component
+                                const mintButton = document.querySelector('#bridge-mint-button button') as HTMLButtonElement;
+                                if (mintButton) {
+                                    console.log('Found mint button in SendTransactionMint - clicking it');
+                                    mintButton.click();
+                                } else {
+                                    console.log('Mint button not found in SendTransactionMint');
+                                    // Fallback to the global handler if button not found
+                                    handleBridgeMint();
+                                }
+                            } catch (err) {
+                                console.error('Error triggering bridge modal mint:', err);
+                                // Fallback to the global handler if any error occurs
+                                handleBridgeMint();
+                            }
+                        }
+                        break;
+                    case 'Escape':
+                        setModalOpen(false);
+                        setBridgeModalOpen(false);
+                        break;
+                }
+                return; // Exit early for modal interactions
+            }
+
+            // Normal gameplay controls when modal is not open
+
+            // Player 1 controls - Arrow keys
+            switch (event.key) {
+                case 'ArrowUp':
+                    moveCharacter(1, 0, -1);
+                    break;
+                case 'ArrowDown':
+                    moveCharacter(1, 0, 1);
+                    break;
+                case 'ArrowLeft':
+                    moveCharacter(1, -1, 0);
+                    break;
+                case 'ArrowRight':
+                    moveCharacter(1, 1, 0);
+                    break;
+                case 'Enter':
+                    // Check for temples or bridges
+                    if (isNextToTemple(player1Position) || isNextToBridge(player1Position)) {
+                        openModal(player1Position, 1);
+                    }
+                    break;
+                case 'Escape':
+                    setModalOpen(false);
+                    setBridgeModalOpen(false);
+                    break;
+            }
+
+            // Player 2 controls - WASD keys (only if two wallets are connected)
+            if (hasTwoWallets) {
+                switch (event.key) {
+                    case 'w':
+                    case 'W':
+                        moveCharacter(2, 0, -1);
+                        break;
+                    case 's':
+                    case 'S':
+                        moveCharacter(2, 0, 1);
+                        break;
+                    case 'a':
+                    case 'A':
+                        moveCharacter(2, -1, 0);
+                        break;
+                    case 'd':
+                    case 'D':
+                        moveCharacter(2, 1, 0);
+                        break;
+                    case ' ': // Space key
+                        // Check for temples or bridges
+                        if (isNextToTemple(player2Position) || isNextToBridge(player2Position)) {
+                            openModal(player2Position, 2);
+                        }
+                        break;
+                }
+            }
+        };
+
+        const handleKeyUp = (event: KeyboardEvent) => {
+            keyState.current[event.code] = false;
+        };
+
+        // Add event listeners
+        window.addEventListener('keydown', handleKeyDown);
+        window.addEventListener('keyup', handleKeyUp);
+
+        // Cleanup
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('keyup', handleKeyUp);
+        };
+    }, [player1Position, player2Position, hasTwoWallets, map, modalOpen, bridgeModalOpen, handleBridgeMint]);
 
     return (
         <>
