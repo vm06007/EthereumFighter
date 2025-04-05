@@ -148,7 +148,6 @@ const Tile = ({ type, x, y }: { type: number, x: number, y: number }) => {
     } else if (type === 4) {
         className += 'river';
         // content = '🌊';
-        content = '🌊';
     } else if (type === 5) {
         className += 'bridge';
         content = '🌉';
@@ -176,7 +175,6 @@ const Tile = ({ type, x, y }: { type: number, x: number, y: number }) => {
                 backgroundColor: type === 1 ? 'rgba(200, 0, 0, 0.7)' :
                     type === 2 ? 'rgba(200, 200, 200, 0.5)' :
                         type === 3 ? 'rgba(200, 200, 200, 0.5)' :
-                            type === 4 ? 'rgba(30, 144, 255, 0.7)' :
                                 type === 5 ? 'rgba(139, 69, 19, 0.7)' : 'transparent'
             }}
         >
@@ -376,11 +374,11 @@ export default function WorldPage() {
         (player2EnsName || shorten(secondWallet.address)) : 'Player 2');
 
     // Redirect if not connected
-    useEffect(() => {
+    /*useEffect(() => {
         if (!isConnected) {
             router.push('/');
         }
-    }, [isConnected, router]);
+    }, [isConnected, router]);*/
 
     // Store wallet information when it becomes available
     useEffect(() => {
@@ -537,7 +535,7 @@ export default function WorldPage() {
             if (isNearWater(newPosition)) {
                 setShowBottomMapper(true);
             } else if (playerNum === 1 && !isNearWater(player2Position) ||
-                     playerNum === 2 && !isNearWater(player1Position)) {
+                playerNum === 2 && !isNearWater(player1Position)) {
                 setShowBottomMapper(false);
             }
         }
