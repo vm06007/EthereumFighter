@@ -79,7 +79,6 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
 
     // Function to convert a Uint8Array to hex string format
     const toHexString = (bytes: Uint8Array) =>
-        Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
 
     /**
      * Handle swap confirmation with direct contract interaction
@@ -258,6 +257,32 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     const swapInfo = message.role === "assistant"
         ? extractSwapInfo(message.content)
         : null;
+
+    // Add keyboard event listener for swap confirmation/rejection
+    useEffect(() => {
+        const handleKeyPress = (e: KeyboardEvent) => {
+            if (!swapInfo || !isLatestMessage) return;
+            
+            // Ignore if any input element is focused (prevents activation while typing)
+            const activeElement = document.activeElement;
+            if (activeElement && 
+                (activeElement.tagName === 'INPUT' || 
+                 activeElement.tagName === 'TEXTAREA' ||
+                 activeElement.getAttribute('contenteditable') === 'true')) {
+                return;
+            }
+
+            // Use 'H' key for confirm
+            if (e.key === 'h' || e.key === 'H') {
+                confirmButtonRef.current?.click();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyPress);
+        return () => {
+            window.removeEventListener('keydown', handleKeyPress);
+        };
+    }, [swapInfo, isLatestMessage]);
 
     // Process message content to highlight JSON
     const processMessageContent = (content: string) => {
