@@ -46,7 +46,8 @@ const staticData = {
     dstChainId: NetworkEnum.OPTIMISM,
     srcTokenAddress: "0xc5fecC3a29Fb57B5024eEc8a2239d4621e111CBE", // 1inch token on base
     dstTokenAddress: "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85", // USDC on optimism
-    amount: "1000000",
+    amount: "1000000000000000000",
+    makerAddress: process.env.WALLET_ADDRESS || "",
     invert: false
   },
   secretsCount: 1,
@@ -88,22 +89,26 @@ app.post('/api/get-quote', async (req: Request, res: Response) => {
     console.log(`Using static swap config: ${JSON.stringify(swapConfig)}`);
     
     const quote = await oneInchService.getQuote(swapConfig);
+    console.log(`Quote received: quote ${quote}`);
+    
     // Store quote in static data for later use
     staticData.quote = quote;
-    staticData.quoteId = quote.id;
-    staticData.secretsCount = quote.getPreset().secretsCount;
+    staticData.quoteId = quote?.id;
+    staticData.secretsCount = quote?.getPreset()?.secretsCount;
     
     res.status(200).json({ 
       success: true, 
       quote: {
-        id: quote.id,
-        srcChainId: quote.srcChainId,
-        dstChainId: quote.dstChainId,
-        secretsCount: quote.getPreset().secretsCount,
+        id: quote?.id,
+        srcChainId: quote?.srcChainId,
+        dstChainId: quote?.dstChainId,
+        secretsCount: quote?.getPreset()?.secretsCount,
         details: quote
       }
     });
   } catch (error: any) {
+    console.log(`Error fetching quote: ${error}`);
+    
     res.status(500).json({ success: false, message: error.message });
   }
 });

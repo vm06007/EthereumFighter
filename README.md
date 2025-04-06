@@ -124,6 +124,8 @@ This creates intense psychological gameplay where reading your opponent becomes 
 ### Prerequisites
 
 ```bash
+cd frontend/wagmi-demo
+
 # Install dependencies
 bun install
 

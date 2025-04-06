@@ -8,6 +8,13 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import ContractWriteTemple from '../../components/ContractWriteTemple';
 import SendTransactionMint from '../../components/SendTransactionMint';
+// Add this import at the top of your file
+import OneInchSwapModal from './OneInchSwapModal';
+import { toast, Toaster } from 'react-hot-toast';
+import oneInchService, { SwapConfig } from '../services/oneInchService';
+import { NetworkEnum } from "@1inch/cross-chain-sdk";
+import axios from 'axios';
+const API_URL = 'http://localhost:3000/api'; // Using relative URL for same-origin requests
 
 const vibrateController = () => {
     if (typeof navigator !== 'undefined' && navigator.getGamepads) {
@@ -358,66 +365,129 @@ export default function WorldPage() {
     const [exchangeQuote, setExchangeQuote] = useState<any>(null);
     const [isLoadingQuote, setIsLoadingQuote] = useState<boolean>(false);
 
-    // Function to fetch exchange quote from our backend
-    const fetchExchangeQuote = async () => {
-        setIsLoadingQuote(true);
-        try {
-            // Make a request to our backend to get a real-time 1inch quote
-            // Our backend handles the API calls and price conversions
-            const apiUrl = 'http://localhost:5000/get_exchange_quote?from_token=1INCH&to_token=ETH&from_amount=10';
-            console.log("Fetching 1inch quote from:", apiUrl);
+    // Function to fetch exchange quote from 1inch
+    // const fetchExchangeQuote = async () => {
+    //     setIsLoadingQuote(true);
+    //     try {
+    //       // Define the swap configuration
+    //       const swapConfig: SwapConfig = {
+    //         srcChainId: NetworkEnum.COINBASE,
+    //         dstChainId: NetworkEnum.OPTIMISM,
+    //         srcTokenAddress: "0xc5fecC3a29Fb57B5024eEc8a2239d4621e111CBE", // 1inch token on base
+    //         dstTokenAddress: "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85", // USDC on optimism
+    //         amount: "1000000000000000000",
+    //         makerAddress: process.env.WALLET_ADDRESS || ""
+            
+    //       };
+      
+      
+    //       // Get quote directly from oneInchService
+    //       console.log("Getting quote from 1inch Fusion+...");
+    //       const quoteResponse = await oneInchService.getQuote(swapConfig);
+    //       console.log("Quote response:", quoteResponse);
+          
+    //       // Format the response for our UI
+    //       const formattedQuote = {
+    //         from: {
+    //           token: "1INCH",
+    //           amount: 10,
+    //           value_usd: 1.83,
+    //           price_usd: 0.183,
+    //           chainId: swapConfig.srcChainId,
+    //           chainName: "Celo",
+    //           tokenAddress: swapConfig.srcTokenAddress
+    //         },
+    //         to: {
+    //           token: "ETH",
+    //           amount: 0.00071,
+    //           value_usd: 1.67,
+    //           price_usd: 2358,
+    //           chainId: swapConfig.dstChainId,
+    //           chainName: "Base",
+    //           tokenAddress: swapConfig.dstTokenAddress
+    //         },
+    //         exchange_rate: 0.000071,
+    //         network_fee_usd: 0.16,
+    //         originalQuote: quoteResponse
+    //       };
+      
+    //       setExchangeQuote(formattedQuote);
+    //       console.log("Exchange quote received:", formattedQuote);
+          
+    //     } catch (error) {
+    //       console.error("Error fetching exchange quote:", error);
+    //       toast.error("Failed to get quote from 1inch. Using fallback values.");
+          
+    //       // Set fallback values if API fails
+    //       setExchangeQuote({
+    //         from: {
+    //           token: "1INCH",
+    //           amount: 10,
+    //           value_usd: 1.83,
+    //           price_usd: 0.183,
+    //           chainId: 42220,
+    //           chainName: "Base",
+    //           tokenAddress: "0x471EcE3750Da237f93B8E339c536989b8978a438"
+    //         },
+    //         to: {
+    //           token: "ETH",
+    //           amount: 0.00071,
+    //           value_usd: 1.67,
+    //           price_usd: 2358,
+    //           chainId: 8453,
+    //           chainName: "Optimism",
+    //           tokenAddress: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
+    //         },
+    //         exchange_rate: 0.000071,
+    //         network_fee_usd: 0.16
+    //       });
+    //     } finally {
+    //       setIsLoadingQuote(false);
+    //     }
+    //   };
+// Add this to your WorldPage.tsx file
+// We'll focus on just the parts that need to be fixed
 
-            const response = await fetch(apiUrl);
-
-            if (response.ok) {
-                const data = await response.json();
-                setExchangeQuote(data);
-                console.log("Exchange quote received:", data);
-            } else {
-                console.error("Failed to fetch exchange quote:", response.statusText);
-                // Set fallback values if API fails with more accurate pricing
-                /*setExchangeQuote({
-                    from: {
-                        token: "1INCH",
-                        amount: 10,
-                        value_usd: 1.83, // Current value for 10 1INCH tokens
-                        price_usd: 0.183 // Current price per 1INCH token
-                    },
-                    to: {
-                        token: "ETH",
-                        amount: 0.00071, // Approx conversion at current rates ~$1.83 worth of ETH
-                        value_usd: 1.67, // Slightly less due to exchange fees
-                        price_usd: 2358  // Current ETH price
-                    },
-                    exchange_rate: 0.000071, // Rate of 1INCH to ETH
-                    network_fee_usd: 0.16    // Reduced fee proportional to the value
-                });
-                */
-            }
-        } catch (error) {
-            console.error("Error fetching exchange quote:", error);
-            // Set fallback values if API fails with more accurate pricing
-            /*setExchangeQuote({
-                from: {
-                    token: "1INCH",
-                    amount: 10,
-                    value_usd: 1.83, // Current value for 10 1INCH tokens
-                    price_usd: 0.183 // Current price per 1INCH token
-                },
-                to: {
-                    token: "ETH",
-                    amount: 0.00071, // Approx conversion at current rates ~$1.83 worth of ETH
-                    value_usd: 1.67, // Slightly less due to exchange fees
-                    price_usd: 2358  // Current ETH price
-                },
-                exchange_rate: 0.000071, // Rate of 1INCH to ETH
-                network_fee_usd: 0.16    // Reduced fee proportional to the value
-            });
-            */
-        } finally {
-            setIsLoadingQuote(false);
-        }
-    };
+// Update the fetchExchangeQuote function to correctly set Base to Optimism with 1INCH to USDC
+const fetchExchangeQuote = async () => {
+    setIsLoadingQuote(true);
+    try {
+      // Step 3: Get quote
+      toast.loading("Getting quote from 1inch Fusion+...");
+      
+      const quoteConfig = {
+        srcChainId: exchangeQuote?.from?.chainId || 8453, // Base
+        dstChainId: exchangeQuote?.to?.chainId || 10,  // Optimism
+        srcTokenAddress: exchangeQuote?.from?.tokenAddress || "0x3a8B787f78D775AECFEEa15706D4221B40F345AB", // 1INCH on Base
+        dstTokenAddress: exchangeQuote?.to?.tokenAddress || "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85", // USDC on Optimism
+        amount: (parseFloat("1") * 1e18).toString(), // Convert to wei
+        walletAddress: player1WalletInfo.address || "0xb930e95d7D417a1bDdc781D381e809F4A6753713"
+      };
+      
+      const quoteResp = await axios.post(`${API_URL}/get-quote`, quoteConfig);
+      if (!quoteResp.data || !quoteResp.data.success) {
+        throw new Error("Failed to get quote. Please try again.");
+      }
+      
+      const quote = quoteResp.data.quote;
+      toast.success("Quote received successfully!");
+      
+    } finally {
+      setIsLoadingQuote(false);
+    }
+  };
+  
+  // Update the network enum if needed
+  // If NetworkEnum.BASE doesn't exist but COINBASE does, you may need this mapping
+  // Define a mapping if needed
+  const NetworkEnum = {
+    BASE: 8453,        // Base chain ID
+    OPTIMISM: 10,      // Optimism chain ID
+    COINBASE: 8453,    // In case COINBASE is used as an alias for Base
+    ETHEREUM: 1        // Ethereum Mainnet
+  };
+  
+  
 
     // Function to fetch token holders and balances
     const fetchTokenBalances = async () => {
@@ -426,7 +496,7 @@ export default function WorldPage() {
                 'https://api.metal.build/token/0x18c86ea247c36f534491dcd2b7abea4534cc5c23',
                 {
                     headers: {
-                        'x-api-key': process.env.METAL_KEY || '',
+                        'x-api-key': process.env.NEXT_PUBLIC_METAL_KEY || '',
                     },
                 }
             );
@@ -707,101 +777,64 @@ export default function WorldPage() {
             }
         }
     };
+// Update after any position changes
+useEffect(() => {
+    // Check both players for water proximity
+    if (isNearWater(player1Position) || isNearWater(player2Position)) {
+        setShowBottomMapper(true);
+    } else {
+        setShowBottomMapper(false);
+    }
+}, [player1Position, player2Position]);
 
-    // Update after any position changes
-    useEffect(() => {
-        // Check both players for water proximity
-        if (isNearWater(player1Position) || isNearWater(player2Position)) {
-            setShowBottomMapper(true);
-        } else {
-            setShowBottomMapper(false);
-        }
-    }, [player1Position, player2Position]);
+// Handle keyboard events
+useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+        if (keyState.current[event.code]) return; // Prevent key repeat
+        keyState.current[event.code] = true;
 
-    // Handle keyboard events
-    useEffect(() => {
-        const handleKeyDown = (event: KeyboardEvent) => {
-            if (keyState.current[event.code]) return; // Prevent key repeat
-            keyState.current[event.code] = true;
+        // Modal interactions have priority
+        if (modalOpen || bridgeModalOpen || swapModalOpen) {
+            switch (event.key) {
+                case 'Enter':
+                case ' ': // Space key
+                    if (modalOpen) {
+                        // Temple modal interaction
+                        console.log('Temple modal open: Attempting to trigger lock tokens from keyboard');
 
-            // Modal interactions have priority
-            if (modalOpen || bridgeModalOpen || swapModalOpen) {
-                switch (event.key) {
-                    case 'Enter':
-                    case ' ': // Space key
-                        if (modalOpen) {
-                            // Temple modal interaction
-                            console.log('Temple modal open: Attempting to trigger lock tokens from keyboard');
-
-                            try {
-                                // Find all buttons in the temple modal
-                                const buttons = document.querySelectorAll('.modal button');
-                                if (buttons.length > 0) {
-                                    // Click the first button (which should be the Lock Tokens/Enter button)
-                                    console.log('Found button in temple modal - clicking it');
-                                    (buttons[0] as HTMLButtonElement).click();
-                                } else {
-                                    console.log('No buttons found in temple modal');
-                                }
-                            } catch (err) {
-                                console.error('Error triggering temple modal action:', err);
+                        try {
+                            // Find all buttons in the temple modal
+                            const buttons = document.querySelectorAll('.modal button');
+                            if (buttons.length > 0) {
+                                // Click the first button (which should be the Lock Tokens/Enter button)
+                                console.log('Found button in temple modal - clicking it');
+                                (buttons[0] as HTMLButtonElement).click();
+                            } else {
+                                console.log('No buttons found in temple modal');
                             }
-                        } else if (bridgeModalOpen) {
-                            // Bridge modal interaction - find and click the mint button
-                            console.log('Bridge modal open: Finding and clicking the mint button');
+                        } catch (err) {
+                            console.error('Error triggering temple modal action:', err);
+                        }
+                    } else if (bridgeModalOpen) {
+                        // Bridge modal interaction - find and click the mint button
+                        console.log('Bridge modal open: Finding and clicking the mint button');
 
-                            try {
-                                // Try to find the button in SendTransactionMint component
-                                const mintButton = document.querySelector('#bridge-mint-button button') as HTMLButtonElement;
-                                if (mintButton) {
-                                    console.log('Found mint button in SendTransactionMint - clicking it');
-                                    mintButton.click();
-                                } else {
-                                    console.log('Mint button not found in SendTransactionMint');
-                                    // Fallback to the global handler if button not found
-                                    handleBridgeMint();
-                                }
-                            } catch (err) {
-                                console.error('Error triggering bridge modal mint:', err);
-                                // Fallback to the global handler if any error occurs
+                        try {
+                            // Try to find the button in SendTransactionMint component
+                            const mintButton = document.querySelector('#bridge-mint-button button') as HTMLButtonElement;
+                            if (mintButton) {
+                                console.log('Found mint button in SendTransactionMint - clicking it');
+                                mintButton.click();
+                            } else {
+                                console.log('Mint button not found in SendTransactionMint');
+                                // Fallback to the global handler if button not found
                                 handleBridgeMint();
                             }
+                        } catch (err) {
+                            console.error('Error triggering bridge modal mint:', err);
+                            // Fallback to the global handler if any error occurs
+                            handleBridgeMint();
                         }
-                        break;
-                    case 'Escape':
-                        setModalOpen(false);
-                        setBridgeModalOpen(false);
-                        setSwapModalOpen(false);
-                        break;
-                    case 'q':
-                            setModalOpen(false);
-                            setBridgeModalOpen(false);
-                            setSwapModalOpen(false);
-                            break;
-                }
-                return; // Exit early for modal interactions
-            }
-
-            // Normal gameplay controls when modal is not open
-
-            // Player 1 controls - Arrow keys
-            switch (event.key) {
-                case 'ArrowUp':
-                    moveCharacter(1, 0, -1);
-                    break;
-                case 'ArrowDown':
-                    moveCharacter(1, 0, 1);
-                    break;
-                case 'ArrowLeft':
-                    moveCharacter(1, -1, 0);
-                    break;
-                case 'ArrowRight':
-                    moveCharacter(1, 1, 0);
-                    break;
-                case 'Enter':
-                    // Check for temples or bridges
-                    if (isNextToTemple(player1Position) || isNextToBridge(player1Position)) {
-                        openModal(player1Position, 1);
                     }
                     break;
                 case 'Escape':
@@ -809,299 +842,285 @@ export default function WorldPage() {
                     setBridgeModalOpen(false);
                     setSwapModalOpen(false);
                     break;
+                case 'q':
+                        setModalOpen(false);
+                        setBridgeModalOpen(false);
+                        setSwapModalOpen(false);
+                        break;
             }
+            return; // Exit early for modal interactions
+        }
 
-            // Player 2 controls - WASD keys (only if two wallets are connected)
-            if (hasTwoWallets) {
-                switch (event.key) {
-                    case 'w':
-                    case 'W':
-                        moveCharacter(2, 0, -1);
-                        break;
-                    case 's':
-                    case 'S':
-                        moveCharacter(2, 0, 1);
-                        break;
-                    case 'a':
-                    case 'A':
-                        moveCharacter(2, -1, 0);
-                        break;
-                    case 'd':
-                    case 'D':
-                        moveCharacter(2, 1, 0);
-                        break;
-                    case ' ': // Space key
-                        // Check for temples or bridges
-                        if (isNextToTemple(player2Position) || isNextToBridge(player2Position)) {
-                            openModal(player2Position, 2);
-                        }
-                        break;
+        // Normal gameplay controls when modal is not open
+
+        // Player 1 controls - Arrow keys
+        switch (event.key) {
+            case 'ArrowUp':
+                moveCharacter(1, 0, -1);
+                break;
+            case 'ArrowDown':
+                moveCharacter(1, 0, 1);
+                break;
+            case 'ArrowLeft':
+                moveCharacter(1, -1, 0);
+                break;
+            case 'ArrowRight':
+                moveCharacter(1, 1, 0);
+                break;
+            case 'Enter':
+                // Check for temples or bridges
+                if (isNextToTemple(player1Position) || isNextToBridge(player1Position)) {
+                    openModal(player1Position, 1);
                 }
+                break;
+            case 'Escape':
+                setModalOpen(false);
+                setBridgeModalOpen(false);
+                setSwapModalOpen(false);
+                break;
+        }
+
+        // Player 2 controls - WASD keys (only if two wallets are connected)
+        if (hasTwoWallets) {
+            switch (event.key) {
+                case 'w':
+                case 'W':
+                    moveCharacter(2, 0, -1);
+                    break;
+                case 's':
+                case 'S':
+                    moveCharacter(2, 0, 1);
+                    break;
+                case 'a':
+                case 'A':
+                    moveCharacter(2, -1, 0);
+                    break;
+                case 'd':
+                case 'D':
+                    moveCharacter(2, 1, 0);
+                    break;
+                case ' ': // Space key
+                    // Check for temples or bridges
+                    if (isNextToTemple(player2Position) || isNextToBridge(player2Position)) {
+                        openModal(player2Position, 2);
+                    }
+                    break;
             }
-        };
+        }
+    };
 
-        const handleKeyUp = (event: KeyboardEvent) => {
-            keyState.current[event.code] = false;
-        };
+    const handleKeyUp = (event: KeyboardEvent) => {
+        keyState.current[event.code] = false;
+    };
 
-        // Add event listeners
-        window.addEventListener('keydown', handleKeyDown);
-        window.addEventListener('keyup', handleKeyUp);
+    // Add event listeners
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
 
-        // Cleanup
-        return () => {
-            window.removeEventListener('keydown', handleKeyDown);
-            window.removeEventListener('keyup', handleKeyUp);
-        };
-    }, [player1Position, player2Position, hasTwoWallets, map, modalOpen, bridgeModalOpen, swapModalOpen, handleBridgeMint]);
+    // Cleanup
+    return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+        window.removeEventListener('keyup', handleKeyUp);
+    };
+}, [player1Position, player2Position, hasTwoWallets, map, modalOpen, bridgeModalOpen, swapModalOpen, handleBridgeMint]);
 
-    return (
-        <>
-            <div style={{
-                backdropFilter: 'brightness(0.2) blur(2px)',
-                backgroundSize: 'cover',
-                margin: 0,
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                height: '110vh',
-                overflow: 'hidden',
-            }}>
-                <div
-                    className="game-container"
-                    ref={gameContainerRef}
-                    style={{
-                        position: 'fixed',
-                        height: '100vh',
-                        // overflow: 'hidden',
-                        transform: 'scale(1.1)',
-                        filter: 'brightness(0.8) contrast(1.4)',
-                        backgroundImage: "url('/world-0.jpg')",
-                        width: '800px',
-                        backgroundSize: 'contain',
-                        backgroundColor: '#2e8b57',
-                        margin: '0 auto',
-                        left: '50%',
-                        marginLeft: '-400px'
-                    }}
-                >
-                    {/* Render map tiles */}
-                    {map.map((row, y) =>
-                        row.map((tile, x) =>
-                            tile > 0 ? <Tile key={`${x}-${y}`} type={tile} x={x} y={y} /> : null
-                        )
-                    )}
-                    {/* Render player 1 */}
-                    <Character
-                        position={player1Position}
-                        nameLabel={player1Display}
-                        frame={player1Frame}
-                        direction={player1Direction}
-                    />
-                    {/* Render player 2 if two wallets are connected */}
-                    {hasTwoWallets && (
-                        <Character
-                            position={player2Position}
-                            nameLabel={player2Display}
-                            frame={player2Frame}
-                            direction={player2Direction}
-                        />
-                    )}
-                    {/* Temple modal */}
-                    <TempleModal
-                        isOpen={modalOpen}
-                        onClose={() => setModalOpen(false)}
-                        position={modalPosition}
-                        playerAddress={activePlayerNumber === 1 ? player1Display : player2Display}
-                        playerWallet={activePlayerNumber === 1 ?
-                            (player1WalletInfo.address || address || '') :
-                            (player2WalletInfo.address || secondWallet?.address || '')
-                        }
-                        templeId={templeId}
-                    />
-                    {/* Bridge modal */}
-                    <BridgeModal
-                        isOpen={bridgeModalOpen}
-                        onClose={() => setBridgeModalOpen(false)}
-                        position={modalPosition}
-                        playerAddress={activePlayerNumber === 1 ? player1Display : player2Display}
-                        playerWallet={activePlayerNumber === 1 ?
-                            (player1WalletInfo.address || address || '') :
-                            (player2WalletInfo.address || secondWallet?.address || '')
-                        }
-                        onMint={handleBridgeMint} // Pass the global mint handler
-                        fetchBalances={fetchTokenBalances} // Pass token balance refresh function
-                    />
-
-                    {/* 1inch Swap Modal */}
-                    {swapModalOpen && (
-                        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-80 z-50">
-                            <div className="bg-white rounded-lg max-w-md w-full p-6">
-                                <div className="flex justify-between items-center mb-4">
-                                    <h2 className="text-xl font-bold text-gray-800">Bridge with 1inch Fusion+</h2>
-                                    <button
-                                        onClick={() => setSwapModalOpen(false)}
-                                        className="text-gray-500 hover:text-gray-700"
-                                    >
-                                        ✕
-                                    </button>
-                                </div>
-
-                                {isLoadingQuote ? (
-                                    <div className="py-8 text-center">
-                                        <p className="text-gray-600 mb-2">Fetching best swap rate with 1inch fusion+...</p>
-                                        <div className="loader mx-auto h-8 w-8 border-4 border-t-blue-500 border-r-transparent border-b-blue-500 border-l-transparent rounded-full animate-spin"></div>
-                                    </div>
-                                ) : (
-                                    <>
-                                        <div className="mb-4">
-                                            <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                                                <div className="flex justify-between items-center mb-2">
-                                                    <span className="text-gray-700">From: Celo</span>
-                                                    <img src="https://cryptologos.cc/logos/1inch-1inch-logo.png" alt="1INCH" className="h-6 w-6" />
-                                                </div>
-                                                <div className="flex justify-between items-center">
-                                                    <span className="font-bold text-lg">
-                                                        {exchangeQuote?.from.amount || 10} {exchangeQuote?.from.token || '1INCH'}
-                                                    </span>
-                                                    <span className="text-gray-500">
-                                                        ≈ ${typeof exchangeQuote?.from.value_usd === 'number' ?
-                                                            Number(exchangeQuote.from.value_usd).toFixed(2) : '1.83'}
-                                                    </span>
-                                                </div>
-                                            </div>
-
-                                            <div className="bg-gray-100 p-4 rounded-lg">
-                                                <div className="flex justify-between items-center mb-2">
-                                                    <span className="text-gray-700">To: Base</span>
-                                                    <img src="https://cryptologos.cc/logos/ethereum-eth-logo.svg" alt="ETH" className="h-6 w-6" />
-                                                </div>
-                                                <div className="flex justify-between items-center">
-                                                    <span className="font-bold text-lg">
-                                                        {typeof exchangeQuote?.to.amount === 'number' ?
-                                                            Number(exchangeQuote.to.amount).toFixed(6) : '0.00071'} {exchangeQuote?.to.token || 'ETH'}
-                                                    </span>
-                                                    {/*<span className="text-gray-500">
-                                                        ≈ ${typeof exchangeQuote?.to.value_usd === 'number' ?
-                                                            exchangeQuote.to.value_usd.toFixed(2) : '1.67'}
-                                                    </span>*/}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex flex-col gap-2 text-sm text-gray-600 mb-4">
-                                            <div className="flex justify-between">
-                                                <span>Exchange Rate:</span>
-                                                <span>
-                                                    1 {exchangeQuote?.from.token || '1INCH'} ≈ {typeof exchangeQuote?.exchange_rate === 'number' ?
-                                                        exchangeQuote.exchange_rate.toFixed(6) : '0.000071'} {exchangeQuote?.to.token || 'ETH'}
-                                                </span>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <span>Network Fee:</span>
-                                                <span>${typeof exchangeQuote?.network_fee_usd === 'number' ?
-                                                    Number(exchangeQuote.network_fee_usd).toFixed(2) : '0.16'}</span>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex gap-3">
-                                            <button
-                                                onClick={() => setSwapModalOpen(false)}
-                                                className="w-1/2 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
-                                            >
-                                                Cancel
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    alert("This would execute the cross-chain swap via 1inch Fusion+");
-                                                    setSwapModalOpen(false);
-                                                }}
-                                                className="w-1/2 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                                            >
-                                                Confirm Swap
-                                            </button>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                    )}
-                </div>
-                {/* Game UI/HUD */}
-                <div className="game-hud" style={{
+return (
+    <>
+        <div style={{
+            backdropFilter: 'brightness(0.2) blur(2px)',
+            backgroundSize: 'cover',
+            margin: 0,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '110vh',
+            overflow: 'hidden',
+        }}>
+            <div
+                className="game-container"
+                ref={gameContainerRef}
+                style={{
                     position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    padding: '10px',
-                    color: 'white',
-                    zIndex: 100
-                }}>
-                    <div className="game-layout flex flex-col md:flex-row justify-between p-4">
-                        {/* Left side - Player 1 */}
-                        <div style={{visibility: "hidden"}} className="player-info p-2 bg-red-900 bg-opacity-80 rounded-lg">
-                            <h2 className="text-xl font-bold">{player1Display}</h2>
-                            <div className="health-bar w-32 h-3 bg-gray-700 mt-1">
-                                <div className="h-full bg-red-600" style={{ width: '100%' }}></div>
-                            </div>
-                        </div>
+                    height: '100vh',
+                    // overflow: 'hidden',
+                    transform: 'scale(1.1)',
+                    filter: 'brightness(0.8) contrast(1.4)',
+                    backgroundImage: "url('/world-0.jpg')",
+                    width: '800px',
+                    backgroundSize: 'contain',
+                    backgroundColor: '#2e8b57',
+                    margin: '0 auto',
+                    left: '50%',
+                    marginLeft: '-400px'
+                }}
+            >
+                {/* Render map tiles */}
+                {map.map((row, y) =>
+                    row.map((tile, x) =>
+                        tile > 0 ? <Tile key={`${x}-${y}`} type={tile} x={x} y={y} /> : null
+                    )
+                )}
+                {/* Render player 1 */}
+                <Character
+                    position={player1Position}
+                    nameLabel={player1Display}
+                    frame={player1Frame}
+                    direction={player1Direction}
+                />
+                {/* Render player 2 if two wallets are connected */}
+                {hasTwoWallets && (
+                    <Character
+                        position={player2Position}
+                        nameLabel={player2Display}
+                        frame={player2Frame}
+                        direction={player2Direction}
+                    />
+                )}
+                {/* Temple modal */}
+                <TempleModal
+                    isOpen={modalOpen}
+                    onClose={() => setModalOpen(false)}
+                    position={modalPosition}
+                    playerAddress={activePlayerNumber === 1 ? player1Display : player2Display}
+                    playerWallet={activePlayerNumber === 1 ?
+                        (player1WalletInfo.address || address || '') :
+                        (player2WalletInfo.address || secondWallet?.address || '')
+                    }
+                    templeId={templeId}
+                />
+                {/* Bridge modal */}
+                <BridgeModal
+                    isOpen={bridgeModalOpen}
+                    onClose={() => setBridgeModalOpen(false)}
+                    position={modalPosition}
+                    playerAddress={activePlayerNumber === 1 ? player1Display : player2Display}
+                    playerWallet={activePlayerNumber === 1 ?
+                        (player1WalletInfo.address || address || '') :
+                        (player2WalletInfo.address || secondWallet?.address || '')
+                    }
+                    onMint={handleBridgeMint} // Pass the global mint handler
+                    fetchBalances={fetchTokenBalances} // Pass token balance refresh function
+                />
 
-                        {/* Right side - Connected wallets stacked vertically */}
-                        <div className="wallets-container flex flex-col gap-2" style={{ maxWidth: '250px' }}>
-                            {/* Display all connected wallets */}
-                            {wallets.map((wallet, index) => {
-                                // Get display name (ENS or shortened address)
-                                const isActiveWallet = wallet.address === address;
-                                const displayName = isActiveWallet ? player1Display :
-                                    (wallet.address === secondWallet?.address ? player2Display : shorten(wallet.address));
-
-                                return (
-                                    <div key={wallet.address}
-                                        className={`wallet-card p-2 rounded-lg ${index === 0 ? 'bg-red-900' : 'bg-blue-900'} bg-opacity-80
-                                        ${isActiveWallet ? 'border-2 border-yellow-400' : ''}`}>
-                                        <div className="flex justify-between items-center">
-                                            {/*<span className="text-sm mr-2">Player {index+1}</span>*/}
-                                            <h2 className="text-lg font-medium">{displayName}</h2>
-                                        </div>
-                                        <div className="health-bar w-full h-2 bg-gray-700 mt-0">
-                                            <div className={`h-full ${index === 0 ? 'bg-red-600' : 'bg-blue-600'}`}
-                                                style={{ width: '100%' }}></div>
-                                        </div>
-                                        <div className="mt-2 text-sm">
-                                            Tokens: {tokenBalances[wallet.address.toLowerCase()] || 5} PT
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                            {/* Show placeholder for Player 2 if no second wallet */}
-                            {wallets.length === 1 && (
-                                <div className="wallet-card p-2 rounded-lg bg-blue-900 bg-opacity-80">
-                                    <div className="flex justify-between items-center">
-                                        {/*<span className="text-sm mr-2">Player 2</span>*/}
-                                        <h2 className="text-lg font-medium">Not Connected</h2>
-                                    </div>
-                                    <div className="health-bar w-full h-2 bg-gray-700 mt-1">
-                                        <div className="h-full bg-blue-600" style={{ width: '0%' }}></div>
-                                    </div>
-                                </div>
-                            )}
+                {/* 1inch Swap Modal */}
+            {swapModalOpen && (
+                <OneInchSwapModal
+                isOpen={swapModalOpen}
+                onClose={() => setSwapModalOpen(false)}
+                fromToken="1INCH"
+                toToken="USDC" // Changed from ETH to USDC
+                fromAmount="1" // Changed from 10 to 1
+                exchangeQuote={exchangeQuote}
+                walletAddress={activePlayerNumber === 1 ? 
+                    (player1WalletInfo.address || address || '') :
+                    (player2WalletInfo.address || secondWallet?.address || '')
+                }
+                />
+            )}
+            </div>
+            {/* Game UI/HUD */}
+            <div className="game-hud" style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100%',
+                padding: '10px',
+                color: 'white',
+                zIndex: 100
+            }}>
+                <div className="game-layout flex flex-col md:flex-row justify-between p-4">
+                    {/* Left side - Player 1 */}
+                    <div style={{visibility: "hidden"}} className="player-info p-2 bg-red-900 bg-opacity-80 rounded-lg">
+                        <h2 className="text-xl font-bold">{player1Display}</h2>
+                        <div className="health-bar w-32 h-3 bg-gray-700 mt-1">
+                            <div className="h-full bg-red-600" style={{ width: '100%' }}></div>
                         </div>
                     </div>
-                    {/* Bottom mapper that shows only when near water and modal is not open */}
-                    {showBottomMapper && !swapModalOpen && (
-                        <div className="bottom-mapper text-center text-xs bg-black bg-opacity-70 p-1 rounded">
-                            {/*<p>Player 1: Arrow Keys | Player 2: WASD</p>*/}
-                            <p>The Bridge is not build yet - use 1INCH Fusion+</p>
-                            <button
-                                className="bb-button mt-1 bg-gray-700 p-1 rounded"
-                                onClick={() => setSwapModalOpen(true)}
-                            >
-                                Bridge My ETH Now!
-                            </button>
-                        </div>
-                    )}
+
+                    {/* Right side - Connected wallets stacked vertically */}
+                    <div className="wallets-container flex flex-col gap-2" style={{ maxWidth: '250px' }}>
+                        {/* Display all connected wallets */}
+                        {wallets.map((wallet, index) => {
+                            // Get display name (ENS or shortened address)
+                            const isActiveWallet = wallet.address === address;
+                            const displayName = isActiveWallet ? player1Display :
+                                (wallet.address === secondWallet?.address ? player2Display : shorten(wallet.address));
+
+                            return (
+                                <div key={wallet.address}
+                                    className={`wallet-card p-2 rounded-lg ${index === 0 ? 'bg-red-900' : 'bg-blue-900'} bg-opacity-80
+                                    ${isActiveWallet ? 'border-2 border-yellow-400' : ''}`}>
+                                    <div className="flex justify-between items-center">
+                                        {/*<span className="text-sm mr-2">Player {index+1}</span>*/}
+                                        <h2 className="text-lg font-medium">{displayName}</h2>
+                                    </div>
+                                    <div className="health-bar w-full h-2 bg-gray-700 mt-0">
+                                        <div className={`h-full ${index === 0 ? 'bg-red-600' : 'bg-blue-600'}`}
+                                            style={{ width: '100%' }}></div>
+                                    </div>
+                                    <div className="mt-2 text-sm">
+                                        Tokens: {tokenBalances[wallet.address.toLowerCase()] || 5} PT
+                                    </div>
+                                </div>
+                            );
+                        })}
+                        {/* Show placeholder for Player 2 if no second wallet */}
+                        {wallets.length === 1 && (
+                            <div className="wallet-card p-2 rounded-lg bg-blue-900 bg-opacity-80">
+                                <div className="flex justify-between items-center">
+                                    {/*<span className="text-sm mr-2">Player 2</span>*/}
+                                    <h2 className="text-lg font-medium">Not Connected</h2>
+                                </div>
+                                <div className="health-bar w-full h-2 bg-gray-700 mt-1">
+                                    <div className="h-full bg-blue-600" style={{ width: '0%' }}></div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
+                
+                {/* Bottom mapper that shows only when near water and modal is not open */}
+                {showBottomMapper && !swapModalOpen && (
+                    <div className="bottom-mapper text-center text-xs bg-black bg-opacity-70 p-1 rounded">
+                    <p>The Bridge is not built yet - use 1INCH Fusion+</p>
+                    <button
+                        className="bb-button mt-1 bg-gray-700 p-1 rounded"
+                        onClick={() => setSwapModalOpen(true)}
+                    >
+                        Bridge 1INCH to USDC Now! {/* Updated button text to reflect the tokens */}
+                    </button>
+                    </div>
+                )}
             </div>
-        </>
-    );
+        </div>
+        {/* Add toast container outside the game container */}
+        <Toaster 
+            position="top-right"
+            toastOptions={{
+                duration: 3000,
+                style: {
+                background: '#363636',
+                color: '#fff',
+                },
+                success: {
+                duration: 3000,
+                iconTheme: {
+                    primary: '#4ade80',
+                    secondary: '#fff',
+                },
+                },
+                error: {
+                duration: 5000,
+                iconTheme: {
+                    primary: '#ef4444',
+                    secondary: '#fff',
+                },
+                },
+                loading: {
+                duration: 10000,
+                },
+            }}
+        />
+    </>
+);
 }
