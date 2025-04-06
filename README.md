@@ -48,11 +48,6 @@ Each agent is powered by sophisticated LLM models (Claude, GPT-4, LLaMA) that ex
 
 The (EF) - Ethereum Fighter game world draws inspiration from Taipei's beautiful islands, with each island representing a different blockchain:
 
-- **Main Island (Ethereum)**: The central hub where most players begin their journey
-- **Northern Shores (Celo)**: A sustainable, mobile-friendly region with unique resources
-- **Eastern Peninsula (Base)**: Known for its speed and efficiency in battle
-- **Western Archipelago (Optimism)**: A collection of smaller islands with optimized throughput
-
 To travel between islands (chains), players must use bridges or cross-chain swaps powered by 1inch Fusion+. This geographic representation creates an intuitive mental model of how blockchain networks interact, teaching cross-chain concepts through spatial navigation rather than technical jargon.
 
 ## 🔒 Privacy-Preserving Battle Mechanics
