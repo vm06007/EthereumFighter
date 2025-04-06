@@ -243,6 +243,18 @@ Our core smart contract system consists of several specialized components:
 │       └── I1inchRouter.sol          # Interface for 1inch swap routing
 ```
 
+### Why METAL
+- **Exceptional User Friendliness**: Designed for intuitive interaction, making blockchain technology accessible to non-technical users
+- **Simple Integration Process**: Streamlined implementation with minimal development overhead, accelerating our go-to-market timeline
+
+### Why 1inch Fusion+
+- **Seamless Cross-Chain Experience**: Eliminates technical complexity of bridging assets between different blockchains
+- **MEV Protection**: Safeguards players from value extraction pitfalls common in cross-chain transactions
+- **Optimal Swap Rates**: Aggregation capabilities secure the best possible exchange rates across multiple markets
+- **Gasless Transactions**: Reduces friction by minimizing additional fees for cross-chain operations
+- **Intuitive Integration**: Enables us to represent cross-chain movement through visual metaphors in our game world
+- **Enterprise-Grade Security**: Provides robust protection for assets during cross-chain transfers
+
 ## 🌱 Why Celo?
 
 We chose to deploy on Celo for several key advantages that enhance our gaming experience:
@@ -255,7 +267,7 @@ We chose to deploy on Celo for several key advantages that enhance our gaming ex
 
 Our Celo integration allows players to learn about and participate in DeFi while enjoying our game, creating an educational on-ramp to blockchain technology through gamification.
 
-## 📱 Future Mobile Features
+## 📱 Future Mobile Features ( future work)
 
 We're developing a comprehensive mobile experience that will include:
 
@@ -266,6 +278,7 @@ We're developing a comprehensive mobile experience that will include:
 - **Mobile Wallet Integration**: Seamless connection with popular mobile wallets
 
 These upcoming features will help bring (EF) - Ethereum Fighter to the next billion users by meeting them on the devices they already use daily.
+Here's your content reorganized into clear bullet points:
 
 ## 🔮 Future Development
 
